@@ -1,0 +1,25 @@
+@import "leaflet/dist/leaflet.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-light text-text-primary font-sans antialiased;
+  }
+}
+
+/* Custom Leaflet Map styling overrides to match theme */
+.leaflet-container {
+  font-family: 'Inter', sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  @apply rounded-card shadow-lg bg-white dark:bg-bg-dark border border-gray-100;
+}
+
+.leaflet-popup-tip {
+  @apply bg-white dark:bg-bg-dark;
+}
