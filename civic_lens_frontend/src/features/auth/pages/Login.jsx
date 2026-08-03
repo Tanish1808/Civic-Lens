@@ -9,9 +9,6 @@ export default function Login() {
   const from = location.state?.from?.pathname || '/dashboard';
   const redirectMessage = location.state?.message;
 
-  // Interactive mouse position for background parallax depth
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
   // Inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,17 +22,7 @@ export default function Login() {
   const [isShaking, setIsShaking] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Track mouse coordinates for subtle interactive background movement
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({
-        x: (e.clientX - window.innerWidth / 2) / 45,
-        y: (e.clientY - window.innerHeight / 2) / 45,
-      });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+
 
   // Real-time inline email validation
   const validateEmail = (value) => {
@@ -127,22 +114,12 @@ export default function Login() {
   return (
     <main className="relative min-h-[calc(100vh-64px)] flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAFBFD] overflow-hidden text-text-primary animate-fade-in select-none">
       
-      {/* 1. Dynamic Parallax Background Orbs */}
+      {/* 1. Background Orbs */}
       <div 
         className={`absolute top-1/4 left-1/4 w-[450px] h-[450px] ${orbLeftColor} rounded-full blur-[80px] -z-10 pointer-events-none transition-all duration-700 ease-out`} 
-        style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}
       />
       <div 
         className={`absolute bottom-1/4 right-1/4 w-[450px] h-[450px] ${orbRightColor} rounded-full blur-[80px] -z-10 pointer-events-none transition-all duration-700 ease-out`} 
-        style={{ transform: `translate(${-mousePos.x}px, ${-mousePos.y}px)` }}
-      />
-      <div 
-        className="absolute top-10 right-1/3 w-32 h-32 rounded-full border border-gray-200/50 bg-white/20 backdrop-blur-sm -z-10 pointer-events-none transition-transform duration-500 ease-out"
-        style={{ transform: `translate(${mousePos.x * 1.5}px, ${mousePos.y * 1.5}px)` }}
-      />
-      <div 
-        className="absolute bottom-20 left-1/3 w-20 h-20 rounded-full border border-gray-200/50 bg-white/20 backdrop-blur-sm -z-10 pointer-events-none transition-transform duration-500 ease-out"
-        style={{ transform: `translate(${-mousePos.x * 2}px, ${-mousePos.y * 2}px)` }}
       />
 
       {/* Main Form Center Container */}
