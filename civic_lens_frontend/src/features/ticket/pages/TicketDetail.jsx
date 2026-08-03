@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, LogIn } from 'lucide-react';
+import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, LogIn, X, ShieldAlert } from 'lucide-react';
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -10,6 +10,8 @@ export default function TicketDetail() {
   // Upvote states
   const [upvotes, setUpvotes] = useState(12);
   const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [modalReason, setModalReason] = useState('upvote'); // 'upvote' | 'resolve'
 
   // Carousel Mock photos
   const photos = [
@@ -20,7 +22,8 @@ export default function TicketDetail() {
 
   const handleUpvote = () => {
     if (!isLoggedIn) {
-      navigate('/login', { state: { message: 'Please sign in to upvote issues.' } });
+      setModalReason('upvote');
+      setShowAuthModal(true);
       return;
     }
     if (hasUpvoted) {
@@ -266,7 +269,8 @@ export default function TicketDetail() {
               <button
                 onClick={() => {
                   if (!isLoggedIn) {
-                    navigate('/login', { state: { message: 'Please sign in to verify ticket resolution.' } });
+                    setModalReason('resolve');
+                    setShowAuthModal(true);
                     return;
                   }
                   alert('Resolution feedback recorded.');
@@ -282,6 +286,63 @@ export default function TicketDetail() {
         </div>
 
       </div>
+      {/* Auth Warning Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay backdrop */}
+          <div 
+            onClick={() => setShowAuthModal(false)}
+            className="absolute inset-0 bg-[#0E131F]/60 backdrop-blur-sm transition-opacity duration-300" 
+          />
+          
+          {/* Modal Container */}
+          <div className="relative bg-white rounded-card border border-gray-100 max-w-md w-full p-8 shadow-2xl space-y-6 transform transition-all duration-300 animate-in zoom-in-95 z-10 text-center">
+            {/* Close button */}
+            <button 
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Glowing warning icon bubble */}
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+              <ShieldAlert className="w-6 h-6 animate-pulse" />
+            </div>
+
+            {/* Modal Heading & text */}
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-black text-text-primary leading-tight">
+                Authentication Required
+              </h3>
+              <p className="text-sm text-text-primary/75 font-semibold leading-relaxed px-2">
+                {modalReason === 'upvote' 
+                  ? 'To upvote this infrastructure report and flag its priority to city zone engineers, you must first sign in to your civic account.'
+                  : 'To verify municipal resolution status and submit feedback, you must first sign in to your civic account.'
+                }
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2 pt-2">
+              <Link
+                to="/login"
+                state={{ from: window.location.pathname, message: `Please sign in to ${modalReason === 'upvote' ? 'upvote issues' : 'verify ticket resolution'}.` }}
+                className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-all duration-300 shadow-lg shadow-primary/10 active:scale-97 cursor-pointer hover:scale-[1.02]"
+              >
+                <span>Sign In</span>
+                <LogIn className="w-3.5 h-3.5" />
+              </Link>
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="w-full py-2.5 px-4 text-xs font-bold rounded-button border border-gray-200 bg-white text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-all duration-300 shadow-sm active:scale-97"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
