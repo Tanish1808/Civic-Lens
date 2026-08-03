@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Camera, Map, FileText, LogIn, LogOut, Shield, Menu, X, Bell, User } from 'lucide-react';
+import { Camera, Map, FileText, LogIn, LogOut, Shield, Menu, X, Bell, User, Trophy } from 'lucide-react';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -73,6 +73,17 @@ export default function Navbar() {
                   <>
                     <Camera className="w-4 h-4" />
                     <span>Report Issue</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+              <NavLink to="/leaderboard" className={activeStyle}>
+                {({ isActive }) => (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    <span>Leaderboard</span>
                     {isActive && (
                       <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
                     )}
@@ -180,6 +191,14 @@ export default function Navbar() {
           >
             <Camera className="w-5 h-5 text-primary" />
             <span>Report Issue</span>
+          </NavLink>
+          <NavLink
+            to="/leaderboard"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-button text-sm font-semibold hover:bg-gray-100"
+          >
+            <Trophy className="w-5 h-5 text-primary" />
+            <span>Leaderboard</span>
           </NavLink>
           {isLoggedIn && (
             <NavLink
