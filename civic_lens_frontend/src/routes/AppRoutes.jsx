@@ -12,6 +12,7 @@ import MyReports from '../features/ticket/pages/MyReports';
 import Login from '../features/auth/pages/Login';
 import Signup from '../features/auth/pages/Signup';
 import AdminLogin from '../features/auth/pages/AdminLogin';
+import Leaderboard from '../features/dashboard/pages/Leaderboard';
 
 // Admin Pages
 import AdminOverview from '../features/admin/pages/AdminOverview';
@@ -71,6 +72,7 @@ export default function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<MapDashboard />} />
         <Route path="/ticket/:id" element={<TicketDetail />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
