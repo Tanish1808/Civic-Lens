@@ -388,7 +388,7 @@ export default function LandingPage() {
               <div className="bg-primary text-white p-2 rounded-card">
                 <Camera className="w-4 h-4" />
               </div>
-              <span className="font-extrabold text-md text-white tracking-tight">
+              <span className="font-extrabold text-xl tracking-tight text-white">
                 Civic<span className="text-primary font-normal">Lens</span>
               </span>
             </div>
