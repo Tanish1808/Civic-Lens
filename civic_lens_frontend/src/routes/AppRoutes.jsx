@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navigation/Navbar';
 import AdminSidebar from '../components/Navigation/AdminSidebar';
 
@@ -19,6 +19,25 @@ import AdminTickets from '../features/admin/pages/AdminTickets';
 import AdminAnalytics from '../features/admin/pages/AdminAnalytics';
 import ManualReviewQueue from '../features/admin/pages/ManualReviewQueue';
 import AdminAuditLog from '../features/admin/pages/AdminAuditLog';
+
+// Route protection wrapper
+function ProtectedRoute({ children }) {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    // Redirect to login, preserving the location they wanted to access
+    return (
+      <Navigate 
+        to="/login" 
+        state={{ from: location, message: 'Please sign in to access that page.' }} 
+        replace 
+      />
+    );
+  }
+
+  return children;
+}
 
 // Layout for Citizen views
 function PublicLayout() {
@@ -51,11 +70,13 @@ export default function AppRoutes() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<MapDashboard />} />
-        <Route path="/report" element={<SubmitReport />} />
         <Route path="/ticket/:id" element={<TicketDetail />} />
-        <Route path="/my-reports" element={<MyReports />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        
+        {/* Protected citizen routes */}
+        <Route path="/report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
+        <Route path="/my-reports" element={<ProtectedRoute><MyReports /></ProtectedRoute>} />
       </Route>
 
       {/* Standalone Admin Login route */}
