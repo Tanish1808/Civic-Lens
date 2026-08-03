@@ -6,15 +6,15 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
-  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'citizen');
-  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Logged In');
+  const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('isLoggedIn') === 'true');
+  const [userRole, setUserRole] = useState(sessionStorage.getItem('userRole') || 'citizen');
+  const [userName, setUserName] = useState(sessionStorage.getItem('userName') || 'Logged In');
 
   React.useEffect(() => {
     const checkAuth = () => {
-      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
-      setUserRole(localStorage.getItem('userRole') || 'citizen');
-      setUserName(localStorage.getItem('userName') || 'Logged In');
+      setIsLoggedIn(sessionStorage.getItem('isLoggedIn') === 'true');
+      setUserRole(sessionStorage.getItem('userRole') || 'citizen');
+      setUserName(sessionStorage.getItem('userName') || 'Logged In');
     };
     window.addEventListener('auth-change', checkAuth);
     window.addEventListener('storage', checkAuth);
@@ -25,9 +25,9 @@ export default function Navbar() {
   }, []);
 
   const handleSignOut = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userName');
     window.dispatchEvent(new Event('auth-change'));
     navigate('/');
   };
@@ -108,23 +108,6 @@ export default function Navbar() {
 
           {/* Desktop Right Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {isLoggedIn && (
-              <button className="p-2 rounded-full text-text-secondary hover:bg-gray-100 hover:text-text-primary transition-colors relative">
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-            )}
-
-            {isLoggedIn && userRole === 'admin' && (
-              <Link
-                to="/admin/overview"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-button text-xs font-bold bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-300"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span>Admin Console</span>
-              </Link>
-            )}
-
             {isLoggedIn ? (
               <>
                 {/* Logged in Username pill */}
@@ -212,17 +195,6 @@ export default function Navbar() {
           )}
           
           <div className="border-t border-gray-200 my-2 pt-2">
-            {isLoggedIn && userRole === 'admin' && (
-              <Link
-                to="/admin/overview"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-button text-sm font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 mb-2"
-              >
-                <Shield className="w-5 h-5" />
-                <span>Admin Console</span>
-              </Link>
-            )}
-
             {isLoggedIn ? (
               <>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-button text-sm font-semibold text-text-secondary select-none">
