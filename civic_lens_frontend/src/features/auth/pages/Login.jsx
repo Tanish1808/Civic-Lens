@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Camera, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/dashboard';
+  const redirectMessage = location.state?.message;
 
   // Interactive mouse position for background parallax depth
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -94,7 +98,10 @@ export default function Login() {
         setAuthError('Invalid email address or password. Please verify your credentials.');
         triggerErrorShake();
       } else {
-        navigate('/dashboard');
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userRole', 'citizen');
+        window.dispatchEvent(new Event('auth-change'));
+        navigate(from, { replace: true });
       }
     }, 1500);
   };
@@ -161,6 +168,14 @@ export default function Login() {
           }`}
         >
           
+          {/* Redirect message for protected routes */}
+          {redirectMessage && !authError && (
+            <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 text-blue-950 border border-blue-200 rounded-card text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-200">
+              <AlertCircle className="w-4.5 h-4.5 flex-shrink-0 text-blue-500 mt-0.5" />
+              <p className="font-semibold">{redirectMessage}</p>
+            </div>
+          )}
+
           {/* Action Failure alert notification banner */}
           {authError && (
             <div className="flex items-start gap-2.5 p-3.5 bg-red-50 text-red-950 border border-red-200 rounded-card text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-200">
