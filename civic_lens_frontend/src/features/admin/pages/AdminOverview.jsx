@@ -44,7 +44,7 @@ export default function AdminOverview() {
       </div>
 
       {/* Admin Action Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Manage Tickets block */}
         <div className="bg-[#151B26]/40 backdrop-blur-lg border border-gray-800/80 rounded-card p-6 flex flex-col justify-between h-48 hover:border-amber-500/20 transition-all duration-300">
           <div>
@@ -71,6 +71,21 @@ export default function AdminOverview() {
             className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors mt-4"
           >
             <span>Resolve manual reviews</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* View Analytics block */}
+        <div className="bg-[#151B26]/40 backdrop-blur-lg border border-gray-800/80 rounded-card p-6 flex flex-col justify-between h-48 hover:border-amber-500/20 transition-all duration-300">
+          <div>
+            <h2 className="text-lg font-extrabold text-white">System Analytics</h2>
+            <p className="text-sm text-gray-400 mt-2">Analyze city performance metrics, track ticket volumes by ward, and inspect resolution charts.</p>
+          </div>
+          <Link 
+            to="/admin/analytics" 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors mt-4"
+          >
+            <span>View charts & graphs</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
