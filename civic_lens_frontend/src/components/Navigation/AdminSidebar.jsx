@@ -1,8 +1,18 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, ArrowLeft, User } from 'lucide-react';
 
 export default function AdminSidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    window.dispatchEvent(new Event('auth-change'));
+    navigate('/admin/login');
+  };
+
   const activeStyle = ({ isActive }) =>
     `relative flex items-center gap-3.5 px-4 py-3 rounded-button text-sm font-semibold transition-all duration-300 ${
       isActive
@@ -74,13 +84,13 @@ export default function AdminSidebar() {
           <span>Citizen Portal</span>
         </NavLink>
         
-        <NavLink
-          to="/login"
-          className="flex items-center gap-3.5 px-4 py-3 rounded-button text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/10 transition-all duration-300"
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3.5 px-4 py-3 rounded-button text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/10 transition-all duration-300 w-full text-left"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   );
