@@ -43,3 +43,29 @@
 .animate-fade-in {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Custom leaflet overrides */
+.custom-leaflet-popup .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 256px !important;
+  line-height: inherit !important;
+}
+
+.custom-leaflet-popup .leaflet-popup-close-button {
+  top: 10px !important;
+  right: 10px !important;
+  color: #94a3b8 !important;
+  font-size: 18px !important;
+  transition: color 0.2s !important;
+}
+
+.custom-leaflet-popup .leaflet-popup-close-button:hover {
+  color: #1e293b !important;
+}
+
+/* Force popup action links to render as white text without default underlines */
+.custom-leaflet-popup .leaflet-popup-content a {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
