@@ -6,9 +6,28 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Placeholder login state - will be connected to AuthContext later
-  const isLoggedIn = false; 
-  const userRole = 'citizen'; // 'citizen' | 'admin'
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'citizen');
+
+  React.useEffect(() => {
+    const checkAuth = () => {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      setUserRole(localStorage.getItem('userRole') || 'citizen');
+    };
+    window.addEventListener('auth-change', checkAuth);
+    window.addEventListener('storage', checkAuth);
+    return () => {
+      window.removeEventListener('auth-change', checkAuth);
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    window.dispatchEvent(new Event('auth-change'));
+    navigate('/');
+  };
 
   const activeStyle = ({ isActive }) =>
     `relative flex items-center gap-2 px-4 py-2.5 rounded-button text-sm font-semibold tracking-wide transition-all duration-300 ${
@@ -94,7 +113,7 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <button
-                onClick={() => navigate('/login')}
+                onClick={handleSignOut}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-button text-text-secondary hover:text-text-primary hover:bg-gray-100/60 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -169,7 +188,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  navigate('/login');
+                  handleSignOut();
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-button text-sm font-semibold text-text-secondary hover:bg-gray-100"
               >
