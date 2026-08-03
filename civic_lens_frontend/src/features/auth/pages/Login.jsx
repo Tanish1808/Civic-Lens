@@ -98,13 +98,13 @@ export default function Login() {
         setAuthError('Invalid email address or password. Please verify your credentials.');
         triggerErrorShake();
       } else {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userRole', 'citizen');
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('userRole', 'citizen');
         
         // Extract capitalized email prefix as userName
         const namePart = email.split('@')[0];
         const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        localStorage.setItem('userName', capitalizedName);
+        sessionStorage.setItem('userName', capitalizedName);
 
         window.dispatchEvent(new Event('auth-change'));
         navigate(from, { replace: true });
