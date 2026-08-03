@@ -4,6 +4,23 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Filter, Search, RotateCcw, AlertCircle, MapPin, Eye, ThumbsUp, Calendar } from 'lucide-react';
 
+const CATEGORY_IMAGES = {
+  Pothole: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=400&q=80',
+  Waterlogging: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=400&q=80',
+  Streetlight: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=400&q=80',
+  Garbage: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=400&q=80',
+  Default: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=400&q=80',
+};
+
+const getCategoryPhoto = (category) => {
+  const catLower = category.toLowerCase();
+  if (catLower.includes('pothole')) return CATEGORY_IMAGES.Pothole;
+  if (catLower.includes('water')) return CATEGORY_IMAGES.Waterlogging;
+  if (catLower.includes('light')) return CATEGORY_IMAGES.Streetlight;
+  if (catLower.includes('garbage') || catLower.includes('dump')) return CATEGORY_IMAGES.Garbage;
+  return CATEGORY_IMAGES.Default;
+};
+
 // Create pulsing neon marker icons based on severity
 const createSeverityMarker = (severity) => {
   const color =
@@ -194,45 +211,76 @@ export default function MapDashboard() {
               icon={createSeverityMarker(ticket.severity)}
             >
               {/* Premium styled popup */}
-              <Popup>
-                <div className="p-2 space-y-3 w-56">
-                  {/* Category & Status */}
-                  <div className="flex justify-between items-center">
-                    <span className="font-extrabold text-sm text-text-primary">{ticket.category}</span>
-                    <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                      ticket.status === 'verified' ? 'bg-green-100 text-green-800' :
-                      ticket.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {ticket.status.replace('_', ' ')}
-                    </span>
-                  </div>
+              <Popup className="custom-leaflet-popup">
+                <div className={`w-64 overflow-hidden bg-white text-text-primary rounded-card flex flex-col font-sans border-t-4 shadow-xl ${
+                  ticket.severity === 'high' ? 'border-t-red-500' :
+                  ticket.severity === 'medium' ? 'border-t-amber-500' :
+                  'border-t-green-500'
+                }`}>
+                  {/* Card content padding */}
+                  <div className="p-5 space-y-4">
+                    {/* Header: Category & Status */}
+                    <div className="space-y-2">
+                      <div className="pr-6">
+                        <span className="font-black text-sm text-text-primary tracking-tight leading-tight block">
+                          {ticket.category} Report
+                        </span>
+                      </div>
 
-                  {/* Location label */}
-                  <p className="text-[11px] text-text-secondary flex items-start gap-1">
-                    <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary mt-0.5" />
-                    <span>{ticket.address}</span>
-                  </p>
-
-                  {/* Stats counters */}
-                  <div className="grid grid-cols-2 gap-2 text-[10px] text-text-secondary bg-gray-50 p-2 rounded-card border border-gray-100 font-mono">
-                    <div>
-                      <p className="font-bold text-text-primary">{ticket.reports}</p>
-                      <p>Reports</p>
+                      {/* Badges Row: Status and Severity stacked below title */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          ticket.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                          ticket.status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
+                          ticket.status === 'verified' ? 'bg-blue-100 text-blue-800' :
+                          'bg-slate-100 text-slate-700'
+                        }`}>
+                          {ticket.status.replace('_', ' ')}
+                        </span>
+                        
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
+                          ticket.severity === 'high' ? 'bg-red-50 text-red-700 border-red-200/50' :
+                          ticket.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200/50' :
+                          'bg-green-50 text-green-700 border-green-200/50'
+                        }`}>
+                          {ticket.severity} Priority
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-text-primary">{ticket.votes}</p>
-                      <p>Upvotes</p>
-                    </div>
-                  </div>
 
-                  {/* Link action */}
-                  <Link
-                    to={`/ticket/${ticket.id}`}
-                    className="w-full flex items-center justify-center gap-1 py-1.5 bg-primary hover:bg-primary/95 text-[11px] font-bold text-white rounded-button shadow-sm transition-colors text-center"
-                  >
-                    <Eye className="w-3 h-3" />
-                    <span>View Ticket Details</span>
-                  </Link>
+                    {/* Location label */}
+                    <p className="text-[11px] text-text-secondary leading-relaxed flex items-start gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary mt-0.5" />
+                      <span>{ticket.address}</span>
+                    </p>
+
+                    {/* Stats counters row */}
+                    <div className="grid grid-cols-2 gap-2 text-[10px] text-text-secondary bg-gray-50/50 p-2.5 rounded-card border border-gray-100 font-mono">
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Reports</p>
+                        <p className="font-extrabold text-sm text-text-primary flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-primary/60" />
+                          <span>{ticket.reports}</span>
+                        </p>
+                      </div>
+                      <div className="space-y-0.5 border-l border-gray-200/85 pl-2">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Upvotes</p>
+                        <p className="font-extrabold text-sm text-text-primary flex items-center gap-1.5">
+                          <ThumbsUp className="w-3.5 h-3.5 text-primary/60" />
+                          <span>{ticket.votes}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Navigation Link button with high visibility text and icon */}
+                    <Link
+                      to={`/ticket/${ticket.id}`}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/95 text-xs font-black text-white rounded-button shadow-md shadow-primary/10 hover:shadow-primary/20 transition-all hover:scale-[1.02] active:scale-97 text-center cursor-pointer"
+                    >
+                      <span>View Ticket Details</span>
+                      <Eye className="w-4 h-4 text-white" />
+                    </Link>
+                  </div>
                 </div>
               </Popup>
             </Marker>
