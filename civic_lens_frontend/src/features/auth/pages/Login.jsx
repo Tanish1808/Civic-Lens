@@ -100,6 +100,12 @@ export default function Login() {
       } else {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userRole', 'citizen');
+        
+        // Extract capitalized email prefix as userName
+        const namePart = email.split('@')[0];
+        const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        localStorage.setItem('userName', capitalizedName);
+
         window.dispatchEvent(new Event('auth-change'));
         navigate(from, { replace: true });
       }
