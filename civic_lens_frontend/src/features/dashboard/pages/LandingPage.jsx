@@ -380,7 +380,7 @@ export default function LandingPage() {
 
       {/* 9. Footer Section */}
       <footer className="bg-[#070A11] border-t border-gray-900/60 py-12 text-gray-400 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 border-b border-gray-900 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 border-b border-gray-900 pb-8">
           
           {/* Logo brand footer */}
           <div className="space-y-4">
@@ -404,6 +404,17 @@ export default function LandingPage() {
               <li><Link to="/dashboard" className="hover:text-white transition-colors">Map Dashboard</Link></li>
               <li><Link to="/report" className="hover:text-white transition-colors">Submit Report</Link></li>
               <li><Link to="/my-reports" className="hover:text-white transition-colors">My Submissions</Link></li>
+            </ul>
+          </div>
+
+          {/* Links 2 */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase tracking-wider text-[10px]">Civic Resources</h4>
+            <ul className="space-y-2">
+              <li><Link to="/report" className="hover:text-white transition-colors">Reporting Guidelines</Link></li>
+              <li><a href="#" className="hover:text-white transition-colors">Local Ward Helpdesk</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Municipal Directory</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Open Data Portal</a></li>
             </ul>
           </div>
 
