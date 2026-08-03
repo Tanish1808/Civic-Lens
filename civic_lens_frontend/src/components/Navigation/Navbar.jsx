@@ -36,32 +36,38 @@ export default function Navbar() {
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-2">
               <NavLink to="/dashboard" className={activeStyle}>
-                <Map className="w-4 h-4" />
-                <span>Map Dashboard</span>
-                {({ isActive }) =>
-                  isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                  )
-                }
+                {({ isActive }) => (
+                  <>
+                    <Map className="w-4 h-4" />
+                    <span>Map Dashboard</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </>
+                )}
               </NavLink>
               <NavLink to="/report" className={activeStyle}>
-                <Camera className="w-4 h-4" />
-                <span>Report Issue</span>
-                {({ isActive }) =>
-                  isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                  )
-                }
+                {({ isActive }) => (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    <span>Report Issue</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </>
+                )}
               </NavLink>
               {isLoggedIn && (
                 <NavLink to="/my-reports" className={activeStyle}>
-                  <FileText className="w-4 h-4" />
-                  <span>My Reports</span>
-                  {({ isActive }) =>
-                    isActive && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                    )
-                  }
+                  {({ isActive }) => (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      <span>My Reports</span>
+                      {isActive && (
+                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                      )}
+                    </>
+                  )}
                 </NavLink>
               )}
             </div>

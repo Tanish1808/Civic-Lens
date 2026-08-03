@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, Map, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github } from 'lucide-react';
+import { Camera, Map, MapPin, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github } from 'lucide-react';
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState(null);
