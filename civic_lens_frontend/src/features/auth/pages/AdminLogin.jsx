@@ -19,8 +19,8 @@ export default function AdminLogin() {
     setTimeout(() => {
       setIsLoading(false);
       if (email === 'admin@civiclens.gov' && password === 'admin123') {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userRole', 'admin');
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('userRole', 'admin');
         window.dispatchEvent(new Event('auth-change'));
         navigate('/admin/overview');
       } else {
