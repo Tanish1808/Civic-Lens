@@ -7,8 +7,8 @@ export default function AdminSidebar() {
 
   const handleLogout = (e) => {
     e.preventDefault();
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userRole');
     window.dispatchEvent(new Event('auth-change'));
     navigate('/admin/login');
   };
