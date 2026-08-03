@@ -11,6 +11,7 @@ import TicketDetail from '../features/ticket/pages/TicketDetail';
 import MyReports from '../features/ticket/pages/MyReports';
 import Login from '../features/auth/pages/Login';
 import Signup from '../features/auth/pages/Signup';
+import AdminLogin from '../features/auth/pages/AdminLogin';
 
 // Admin Pages
 import AdminOverview from '../features/admin/pages/AdminOverview';
@@ -56,6 +57,9 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Route>
+
+      {/* Standalone Admin Login route */}
+      <Route path="/admin/login" element={<AdminLogin />} />
 
       {/* Admin routes */}
       <Route element={<AdminLayout />}>
