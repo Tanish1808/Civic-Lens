@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle } from 'lucide-react';
+import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, LogIn } from 'lucide-react';
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -151,17 +151,29 @@ export default function TicketDetail() {
 
             {/* Comment Form input */}
             {!isLoggedIn ? (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4.5 bg-gray-50 border border-gray-200/80 rounded-card">
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-text-primary">Want to join the conversation?</p>
-                  <p className="text-xs text-text-secondary">Sign in or register to post comments, updates, or verify resolution status.</p>
+              <div className="relative overflow-hidden p-6 bg-gradient-to-r from-primary/[0.03] to-accent/[0.03] border border-primary/10 rounded-card flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300">
+                {/* Decorative background glow */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none -z-10" />
+                
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-primary/10 rounded-full text-primary flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black text-text-primary">Want to join the conversation?</h4>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      Sign in or register to post comments, share real-time updates, or confirm resolution.
+                    </p>
+                  </div>
                 </div>
+
                 <Link
                   to="/login"
                   state={{ from: window.location.pathname }}
-                  className="px-4.5 py-2 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-sm whitespace-nowrap active:scale-97 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/10 hover:shadow-primary/20 active:scale-95 transition-all duration-300 whitespace-nowrap cursor-pointer hover:scale-[1.02]"
                 >
-                  Sign In to Comment
+                  <span>Sign In to Comment</span>
+                  <LogIn className="w-3.5 h-3.5" />
                 </Link>
               </div>
             ) : (
