@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle } from 'lucide-react';
 
 export default function TicketDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
   
   // Upvote states
   const [upvotes, setUpvotes] = useState(12);
@@ -17,6 +19,10 @@ export default function TicketDetail() {
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
 
   const handleUpvote = () => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { message: 'Please sign in to upvote issues.' } });
+      return;
+    }
     if (hasUpvoted) {
       setUpvotes(prev => prev - 1);
       setHasUpvoted(false);
@@ -144,19 +150,35 @@ export default function TicketDetail() {
             </div>
 
             {/* Comment Form input */}
-            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Write a supportive comment or update..."
-                className="flex-1 min-w-0 border border-gray-200 bg-gray-50/50 rounded-button px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all duration-300"
-              />
-              <button
-                type="submit"
-                className="px-5 py-2.5 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-md shadow-primary/10"
-              >
-                Post Comment
-              </button>
-            </form>
+            {!isLoggedIn ? (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4.5 bg-gray-50 border border-gray-200/80 rounded-card">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-text-primary">Want to join the conversation?</p>
+                  <p className="text-xs text-text-secondary">Sign in or register to post comments, updates, or verify resolution status.</p>
+                </div>
+                <Link
+                  to="/login"
+                  state={{ from: window.location.pathname }}
+                  className="px-4.5 py-2 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-sm whitespace-nowrap active:scale-97 cursor-pointer"
+                >
+                  Sign In to Comment
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Write a supportive comment or update..."
+                  className="flex-1 min-w-0 border border-gray-200 bg-gray-50/50 rounded-button px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all duration-300"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-md shadow-primary/10"
+                >
+                  Post Comment
+                </button>
+              </form>
+            )}
           </div>
 
         </div>
@@ -230,7 +252,13 @@ export default function TicketDetail() {
 
             <div className="border-t border-gray-100 pt-4 mt-2">
               <button
-                onClick={() => alert('Resolution feedback recorded.')}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    navigate('/login', { state: { message: 'Please sign in to verify ticket resolution.' } });
+                    return;
+                  }
+                  alert('Resolution feedback recorded.');
+                }}
                 className="w-full flex justify-center items-center gap-1.5 py-2.5 px-4 border border-green-300 text-xs font-bold rounded-button text-green-700 bg-green-500/10 hover:bg-green-500/20 transition-all duration-300"
               >
                 <CheckCircle2 className="w-4 h-4" />
