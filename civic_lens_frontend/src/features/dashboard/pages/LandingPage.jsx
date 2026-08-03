@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, Map, MapPin, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github } from 'lucide-react';
+import { Camera, Map, MapPin, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github, X } from 'lucide-react';
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactSubmitted, setContactSubmitted] = useState(false);
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -311,9 +313,12 @@ export default function LandingPage() {
               <h4 className="font-bold text-sm text-text-primary">Looking to pilot in your city?</h4>
               <p className="text-xs text-text-secondary mt-1">Get custom municipal dashboards and reports integration.</p>
             </div>
-            <Link to="#" className="px-5 py-2.5 bg-primary hover:bg-primary/95 text-white font-bold rounded-button text-xs transition-colors whitespace-nowrap">
+            <button 
+              onClick={() => { setShowContactModal(true); setContactSubmitted(false); }}
+              className="px-5 py-2.5 bg-primary hover:bg-primary/95 text-white font-bold rounded-button text-xs transition-colors whitespace-nowrap active:scale-95 transition-transform"
+            >
               Contact Admin Support
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -445,6 +450,95 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Contact Admin Support Modal Overlay */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setShowContactModal(false)}
+          />
+          
+          {/* Modal Card */}
+          <div className="bg-white rounded-card shadow-2xl border border-gray-150 p-6 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-text-primary transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {!contactSubmitted ? (
+              <form 
+                onSubmit={(e) => { e.preventDefault(); setContactSubmitted(true); }}
+                className="space-y-4 text-left"
+              >
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-text-primary">Contact Support Portal</h3>
+                  <p className="text-xs text-text-secondary">Request custom ward dashboards or pilot integration details.</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Name</label>
+                    <input required type="text" placeholder="Rohan Sharma" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Official Email</label>
+                    <input required type="email" placeholder="rohan@ahmedabadmunicipal.gov.in" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Municipality / City</label>
+                    <input required type="text" placeholder="Ahmedabad Municipal Corporation" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Request Details</label>
+                    <textarea required rows={3} placeholder="We would like to request a demo of the municipal dashboard for our city zone..." className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowContactModal(false)}
+                    className="flex-1 py-2.5 border border-gray-200 text-xs font-bold text-text-primary rounded-button bg-white hover:bg-gray-50 transition-colors text-center"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-primary hover:bg-primary/95 text-white text-xs font-extrabold rounded-button shadow-md shadow-primary/10 transition-colors text-center"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="text-center py-6 space-y-4 animate-in fade-in duration-300">
+                <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                  <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-text-primary">Request Submitted!</h3>
+                  <p className="text-xs text-text-secondary max-w-xs mx-auto leading-relaxed">
+                    Thank you. Our administration support team will review your credentials and contact you within 24 hours.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowContactModal(false)}
+                  className="px-6 py-2 bg-primary hover:bg-primary/95 text-white text-xs font-bold rounded-button shadow-md transition-colors"
+                >
+                  Close Window
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
