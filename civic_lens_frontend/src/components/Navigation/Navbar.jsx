@@ -7,8 +7,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Placeholder login state - will be connected to AuthContext later
-  const isLoggedIn = true; 
-  const userRole = 'admin'; // 'citizen' | 'admin'
+  const isLoggedIn = false; 
+  const userRole = 'citizen'; // 'citizen' | 'admin'
 
   const activeStyle = ({ isActive }) =>
     `relative flex items-center gap-2 px-4 py-2.5 rounded-button text-sm font-semibold tracking-wide transition-all duration-300 ${
