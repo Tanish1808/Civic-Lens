@@ -22,9 +22,9 @@ export default function Signup() {
     setConfirmPasswordError('');
 
     // Save logged in state automatically
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userRole', 'citizen');
-    localStorage.setItem('userName', fullName || 'Citizen User');
+    sessionStorage.setItem('isLoggedIn', 'true');
+    sessionStorage.setItem('userRole', 'citizen');
+    sessionStorage.setItem('userName', fullName || 'Citizen User');
     window.dispatchEvent(new Event('auth-change'));
 
     navigate('/dashboard');
