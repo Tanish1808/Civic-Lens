@@ -19,6 +19,9 @@ export default function AdminLogin() {
     setTimeout(() => {
       setIsLoading(false);
       if (email === 'admin@civiclens.gov' && password === 'admin123') {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userRole', 'admin');
+        window.dispatchEvent(new Event('auth-change'));
         navigate('/admin/overview');
       } else {
         setAuthError('Invalid administrator credentials. Access Denied.');
