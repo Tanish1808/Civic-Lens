@@ -12,6 +12,8 @@ export default function TicketDetail() {
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [modalReason, setModalReason] = useState('upvote'); // 'upvote' | 'resolve'
+  const [hasVerifiedResolved, setHasVerifiedResolved] = useState(false);
+  const [verificationsCount, setVerificationsCount] = useState(3);
 
   // Carousel Mock photos
   const photos = [
@@ -265,7 +267,17 @@ export default function TicketDetail() {
               <span className="font-bold text-text-primary">Jul 20, 2026</span>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 mt-2">
+            <div className="flex justify-between items-center text-xs border-t border-gray-100 pt-3">
+              <span className="text-text-secondary flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <span>Citizen Confirmations</span>
+              </span>
+              <span className="font-bold text-text-primary bg-green-50 px-2 py-0.5 rounded text-[10px] border border-green-200">
+                {verificationsCount} verifications
+              </span>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 mt-2 space-y-3">
               <button
                 onClick={() => {
                   if (!isLoggedIn) {
@@ -273,13 +285,29 @@ export default function TicketDetail() {
                     setShowAuthModal(true);
                     return;
                   }
-                  alert('Resolution feedback recorded.');
+                  if (hasVerifiedResolved) {
+                    setHasVerifiedResolved(false);
+                    setVerificationsCount(prev => prev - 1);
+                  } else {
+                    setHasVerifiedResolved(true);
+                    setVerificationsCount(prev => prev + 1);
+                  }
                 }}
-                className="w-full flex justify-center items-center gap-1.5 py-2.5 px-4 border border-green-300 text-xs font-bold rounded-button text-green-700 bg-green-500/10 hover:bg-green-500/20 transition-all duration-300"
+                className={`w-full flex justify-center items-center gap-2 py-2.5 px-4 text-xs font-bold rounded-button transition-all duration-300 active:scale-97 cursor-pointer hover:scale-[1.02] border ${
+                  hasVerifiedResolved
+                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-600/10 hover:bg-green-700'
+                    : 'border-green-300 text-green-700 bg-green-500/10 hover:bg-green-500/20'
+                }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Mark as Already Resolved</span>
+                <span>{hasVerifiedResolved ? 'Resolution Verified ✓' : 'Mark as Already Resolved'}</span>
               </button>
+
+              {hasVerifiedResolved && (
+                <div className="p-3 bg-green-50 border border-green-200/60 rounded-card text-[11px] text-green-800 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-300">
+                  <strong>Verification Logged!</strong> Thank you for verifying this repair. Your feedback is sent to the Public Works Dept to close this ticket.
+                </div>
+              )}
             </div>
           </div>
 
