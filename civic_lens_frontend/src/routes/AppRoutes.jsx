@@ -23,7 +23,7 @@ import AdminAuditLog from '../features/admin/pages/AdminAuditLog';
 
 // Route protection wrapper
 function ProtectedRoute({ children }) {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
   const location = useLocation();
 
   if (!isLoggedIn) {
