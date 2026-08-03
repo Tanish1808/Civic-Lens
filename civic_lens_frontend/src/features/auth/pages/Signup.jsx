@@ -5,13 +5,21 @@ import { Camera, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 export default function Signup() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const handleSignup = (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      return;
+    }
+    setConfirmPasswordError('');
     navigate('/dashboard');
   };
 
@@ -115,7 +123,7 @@ export default function Signup() {
             {/* Password Field */}
             <div className="mt-4">
               <label htmlFor="password" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">
-                Choose Password
+                Enter Password
               </label>
               <div className="relative mt-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -128,7 +136,14 @@ export default function Signup() {
                   required
                   placeholder="Min. 8 characters"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (confirmPassword && e.target.value !== confirmPassword) {
+                      setConfirmPasswordError('Passwords do not match');
+                    } else {
+                      setConfirmPasswordError('');
+                    }
+                  }}
                   className="appearance-none block w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-button bg-white/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all duration-300 placeholder-gray-400"
                 />
                 <button
@@ -137,6 +152,51 @@ export default function Signup() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-text-primary transition-colors duration-300"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="mt-4">
+              <div className="flex justify-between">
+                <label htmlFor="confirmPassword" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">
+                  Confirm Password
+                </label>
+                {confirmPasswordError && (
+                  <span className="text-[10px] font-bold text-red-500 animate-in fade-in duration-200">
+                    {confirmPasswordError}
+                  </span>
+                )}
+              </div>
+              <div className="relative mt-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (password && e.target.value !== password) {
+                      setConfirmPasswordError('Passwords do not match');
+                    } else {
+                      setConfirmPasswordError('');
+                    }
+                  }}
+                  className={`appearance-none block w-full pl-10 pr-10 py-2.5 border rounded-button bg-white/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm transition-all duration-300 placeholder-gray-400 ${
+                    confirmPasswordError ? 'border-red-300 focus:border-red-500 focus:ring-red-505/10' : 'border-gray-200'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-text-primary transition-colors duration-300"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
