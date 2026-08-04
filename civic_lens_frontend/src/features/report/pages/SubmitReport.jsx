@@ -114,7 +114,8 @@ export default function SubmitReport() {
         console.error('Error submitting report:', err);
         setIsProcessing(false);
         if (err.response && err.response.data) {
-          setSubmitError(err.response.data.message || 'Failed to submit report. Please review form entries.');
+          const errMsg = err.response.data.error?.message || err.response.data.message || 'Failed to submit report. Please review form entries.';
+          setSubmitError(errMsg);
         } else {
           setSubmitError('Unable to connect to the server. Please check your connection.');
         }
