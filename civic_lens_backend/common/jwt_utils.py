@@ -22,6 +22,7 @@ def generate_access_token(user):
         "sub": str(user.id),
         "role": user.role,
         "email": user.email,
+        "name": user.full_name,
         "iat": _now(),
         "exp": _now() + settings.JWT_ACCESS_TOKEN_LIFETIME,
     }
