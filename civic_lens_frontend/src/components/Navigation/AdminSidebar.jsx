@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, ArrowLeft, User, Mail } from 'lucide-react';
+import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, User, Mail } from 'lucide-react';
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -85,14 +85,6 @@ export default function AdminSidebar() {
 
       {/* Footer Navigation */}
       <div className="p-6 border-t border-gray-800/40 flex flex-col gap-2">
-        <NavLink
-          to="/dashboard"
-          className="flex items-center gap-3.5 px-4 py-3 rounded-button text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800/40 transition-all duration-300"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Citizen Portal</span>
-        </NavLink>
-        
         <button
           onClick={handleLogout}
           className="flex items-center gap-3.5 px-4 py-3 rounded-button text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/10 transition-all duration-300 w-full text-left"
