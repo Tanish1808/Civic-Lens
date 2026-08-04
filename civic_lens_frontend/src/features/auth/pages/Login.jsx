@@ -81,13 +81,15 @@ export default function Login() {
     api.post('/auth/login', { email, password })
       .then((response) => {
         setIsLoading(false);
-        const { access_token, role } = response.data.data;
+        const { access_token, role, full_name } = response.data.data;
 
-        // Decode JWT payload to retrieve user ID and email
+        // Decode JWT payload to retrieve user ID, email, and name
+        let tokenName = '';
         try {
           const payload = JSON.parse(atob(access_token.split('.')[1]));
           sessionStorage.setItem('userId', payload.sub);
           sessionStorage.setItem('userEmail', payload.email);
+          tokenName = payload.name;
         } catch (e) {
           console.error('Failed to parse JWT payload', e);
         }
@@ -96,10 +98,10 @@ export default function Login() {
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userRole', role);
 
-        // Extract capitalized email prefix as userName
+        // Prefer actual full name from JWT or response, fallback to email prefix
         const namePart = email.split('@')[0];
         const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        sessionStorage.setItem('userName', capitalizedName);
+        sessionStorage.setItem('userName', tokenName || full_name || capitalizedName);
 
         window.dispatchEvent(new Event('auth-change'));
         navigate(from, { replace: true });
