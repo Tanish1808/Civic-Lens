@@ -24,17 +24,7 @@ export default function AdminAnalytics() {
           reported: t.created_count,
           resolved: t.resolved_count
         }));
-        
-        const hasLiveTrends = trends.length > 0 && trends.some(t => t.reported > 0 || t.resolved > 0);
-        setTrendData(hasLiveTrends ? trends : [
-          { name: 'Mon', reported: 12, resolved: 8 },
-          { name: 'Tue', reported: 18, resolved: 10 },
-          { name: 'Wed', reported: 15, resolved: 14 },
-          { name: 'Thu', reported: 22, resolved: 16 },
-          { name: 'Fri', reported: 30, resolved: 24 },
-          { name: 'Sat', reported: 10, resolved: 18 },
-          { name: 'Sun', reported: 8, resolved: 12 },
-        ]);
+        setTrendData(trends);
 
         // 2. Process Categories Data
         const categoryFills = {
@@ -50,13 +40,7 @@ export default function AdminAnalytics() {
           count: c.count,
           fill: categoryFills[c.category.toLowerCase()] || '#607D8B'
         }));
-        const hasLiveCategories = categories.length > 0 && categories.some(c => c.count > 0);
-        setCategoryData(hasLiveCategories ? categories : [
-          { name: 'Pothole', count: 48, fill: '#1E5F8C' },
-          { name: 'Garbage', count: 32, fill: '#E8A33D' },
-          { name: 'Waterlogging', count: 28, fill: '#9C27B0' },
-          { name: 'Streetlight', count: 18, fill: '#4CAF50' }
-        ]);
+        setCategoryData(categories);
 
         // 3. Process Severity Data
         const severityColors = {
@@ -70,12 +54,7 @@ export default function AdminAnalytics() {
           value: s.count,
           color: severityColors[s.severity.toLowerCase()] || '#607D8B'
         }));
-        const hasLiveSeverities = severities.length > 0 && severities.some(s => s.value > 0);
-        setSeverityData(hasLiveSeverities ? severities : [
-          { name: 'High', value: 45, color: '#D64545' },
-          { name: 'Medium', value: 35, color: '#E8A33D' },
-          { name: 'Low', value: 20, color: '#4CAF7D' }
-        ]);
+        setSeverityData(severities);
 
         setIsLoading(false);
       })

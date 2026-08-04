@@ -7,6 +7,7 @@ Architecture Document Section 10, invalidated on ticket status change
 """
 import datetime
 
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.views import APIView
 
@@ -47,15 +48,12 @@ class OverviewView(APIView):
             round(sum(resolution_days) / len(resolution_days), 2) if resolution_days else None
         )
 
-        category_pipeline = Ticket._get_collection().aggregate(
-            [
-                {"$match": {"is_flagged_spam": False}},
-                {"$group": {"_id": "$category", "count": {"$sum": 1}}},
-                {"$sort": {"count": -1}},
-                {"$limit": 1},
-            ]
-        )
-        most_reported_category = next(iter(category_pipeline), {}).get("_id")
+        tickets = Ticket.objects(is_flagged_spam=False)
+        counts = {}
+        for t in tickets:
+            if t.category:
+                counts[t.category] = counts.get(t.category, 0) + 1
+        most_reported_category = max(counts, key=counts.get) if counts else None
 
         from apps.reports.models import Report
 
@@ -86,22 +84,27 @@ class CategoryBreakdownView(APIView):
         if not _check_admin(request):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
-        match_stage = {"is_flagged_spam": False}
-        _apply_date_range(match_stage, request)
+        date_from = request.query_params.get("date_from")
+        date_to = request.query_params.get("date_to")
+        queryset = Ticket.objects(is_flagged_spam=False)
+        if date_from:
+            queryset = queryset.filter(created_at__gte=datetime.datetime.fromisoformat(date_from))
+        if date_to:
+            queryset = queryset.filter(created_at__lte=datetime.datetime.fromisoformat(date_to))
 
-        pipeline = [
-            {"$match": match_stage},
-            {"$group": {"_id": "$category", "count": {"$sum": 1}}},
-        ]
-        results = list(Ticket._get_collection().aggregate(pipeline))
-        total = sum(r["count"] for r in results) or 1
+        counts = {}
+        for t in queryset:
+            if t.category:
+                counts[t.category] = counts.get(t.category, 0) + 1
+
+        total = sum(counts.values()) or 1
         breakdown = [
             {
-                "category": r["_id"],
-                "count": r["count"],
-                "percentage": round(r["count"] / total * 100, 2),
+                "category": cat,
+                "count": cnt,
+                "percentage": round(cnt / total * 100, 2),
             }
-            for r in results
+            for cat, cnt in counts.items()
         ]
         return success({"breakdown": breakdown})
 
@@ -111,12 +114,13 @@ class SeverityDistributionView(APIView):
         if not _check_admin(request):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
-        pipeline = [
-            {"$match": {"is_flagged_spam": False}},
-            {"$group": {"_id": "$severity", "count": {"$sum": 1}}},
-        ]
-        results = list(Ticket._get_collection().aggregate(pipeline))
-        distribution = [{"severity": r["_id"], "count": r["count"]} for r in results]
+        tickets = Ticket.objects(is_flagged_spam=False)
+        counts = {}
+        for t in tickets:
+            if t.severity:
+                counts[t.severity] = counts.get(t.severity, 0) + 1
+
+        distribution = [{"severity": sev, "count": cnt} for sev, cnt in counts.items()]
         return success({"distribution": distribution})
 
 
@@ -126,52 +130,39 @@ class ResolutionTrendView(APIView):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
         interval = request.query_params.get("interval", "week")
-        date_format = "%Y-%U" if interval == "week" else "%Y-%m"
+        
+        date_from = request.query_params.get("date_from")
+        date_to = request.query_params.get("date_to")
+        queryset = Ticket.objects(is_flagged_spam=False)
+        if date_from:
+            queryset = queryset.filter(created_at__gte=datetime.datetime.fromisoformat(date_from))
+        if date_to:
+            queryset = queryset.filter(created_at__lte=datetime.datetime.fromisoformat(date_to))
 
-        match_stage = {"is_flagged_spam": False}
-        _apply_date_range(match_stage, request)
+        periods = {}
+        for t in queryset:
+            if not t.created_at:
+                continue
+            period = t.created_at.strftime("%Y-%U" if interval == "week" else "%Y-%m")
+            if period not in periods:
+                periods[period] = {"created": 0, "resolved": 0, "resolution_times": []}
 
-        pipeline = [
-            {"$match": match_stage},
-            {
-                "$group": {
-                    "_id": {
-                        "period": {"$dateToString": {"format": date_format, "date": "$created_at"}}
-                    },
-                    "created_count": {"$sum": 1},
-                    "resolved_count": {
-                        "$sum": {"$cond": [{"$eq": ["$status", "resolved"]}, 1, 0]}
-                    },
-                    "avg_resolution_days": {
-                        "$avg": {
-                            "$cond": [
-                                {"$and": [{"$ne": ["$resolved_at", None]}]},
-                                {
-                                    "$divide": [
-                                        {"$subtract": ["$resolved_at", "$created_at"]},
-                                        1000 * 60 * 60 * 24,
-                                    ]
-                                },
-                                None,
-                            ]
-                        }
-                    },
-                }
-            },
-            {"$sort": {"_id.period": 1}},
-        ]
-        results = list(Ticket._get_collection().aggregate(pipeline))
-        trend = [
-            {
-                "period": r["_id"]["period"],
-                "created_count": r["created_count"],
-                "resolved_count": r["resolved_count"],
-                "avg_resolution_days": round(r["avg_resolution_days"], 2)
-                if r.get("avg_resolution_days") is not None
-                else None,
-            }
-            for r in results
-        ]
+            periods[period]["created"] += 1
+            if t.status == "resolved" and t.resolved_at:
+                periods[period]["resolved"] += 1
+                days = (t.resolved_at - t.created_at).total_seconds() / 86400.0
+                periods[period]["resolution_times"].append(days)
+
+        trend = []
+        for period in sorted(periods.keys()):
+            p_data = periods[period]
+            avg_days = sum(p_data["resolution_times"]) / len(p_data["resolution_times"]) if p_data["resolution_times"] else None
+            trend.append({
+                "period": period,
+                "created_count": p_data["created"],
+                "resolved_count": p_data["resolved"],
+                "avg_resolution_days": round(avg_days, 2) if avg_days is not None else None
+            })
         return success({"trend": trend})
 
 
@@ -180,38 +171,28 @@ class AreaDensityView(APIView):
         if not _check_admin(request):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
-        # Grid-cell bucketing at ~0.01 degree resolution (~1km) as a simple
-        # stand-in for a proper zone lookup (zones collection is reserved
-        # for future multi-zone scope per Database Design Document Section 3.9).
-        pipeline = [
-            {"$match": {"is_flagged_spam": False, "status": {"$ne": "resolved"}}},
-            {
-                "$group": {
-                    "_id": {
-                        "lat_bucket": {
-                            "$round": [{"$arrayElemAt": ["$location.coordinates", 1]}, 2]
-                        },
-                        "lng_bucket": {
-                            "$round": [{"$arrayElemAt": ["$location.coordinates", 0]}, 2]
-                        },
-                    },
-                    "unresolved_count": {"$sum": 1},
-                }
-            },
-            {"$sort": {"unresolved_count": -1}},
-            {"$limit": 50},
-        ]
-        results = list(Ticket._get_collection().aggregate(pipeline))
+        tickets = Ticket.objects(is_flagged_spam=False, status__ne="resolved")
+        buckets = {}
+        for t in tickets:
+            if not t.location or not t.location.get("coordinates") or len(t.location["coordinates"]) < 2:
+                continue
+            lng, lat = t.location["coordinates"]
+            lat_b = round(lat, 2)
+            lng_b = round(lng, 2)
+            key = (lat_b, lng_b)
+            buckets[key] = buckets.get(key, 0) + 1
+
+        sorted_buckets = sorted(buckets.items(), key=lambda x: x[1], reverse=True)[:50]
         areas = [
             {
-                "zone_or_grid_cell": f"{r['_id']['lat_bucket']},{r['_id']['lng_bucket']}",
-                "unresolved_count": r["unresolved_count"],
+                "zone_or_grid_cell": f"{lat_b},{lng_b}",
+                "unresolved_count": count,
                 "location": {
                     "type": "Point",
-                    "coordinates": [r["_id"]["lng_bucket"], r["_id"]["lat_bucket"]],
+                    "coordinates": [lng_b, lat_b],
                 },
             }
-            for r in results
+            for (lat_b, lng_b), count in sorted_buckets
         ]
         return success({"areas": areas})
 
