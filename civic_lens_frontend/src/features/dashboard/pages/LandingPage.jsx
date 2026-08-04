@@ -1,14 +1,51 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, Map, MapPin, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github, X } from 'lucide-react';
+import { Camera, Map, MapPin, ShieldAlert, Award, ArrowRight, CheckCircle2, AlertTriangle, Layers, ChevronDown, ChevronUp, Star, Quote, ArrowUpRight, Github, X, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
 
+  // Form states for support portal
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMunicipality, setContactMunicipality] = useState('');
+  const [contactDetails, setContactDetails] = useState('');
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactError, setContactError] = useState('');
+
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? null : index);
+  };
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmittingContact(true);
+    setContactError('');
+
+    api.post('/support-requests', {
+      name: contactName,
+      email: contactEmail,
+      municipality: contactMunicipality,
+      details: contactDetails
+    })
+      .then(() => {
+        setIsSubmittingContact(false);
+        setContactSubmitted(true);
+        // Clear inputs
+        setContactName('');
+        setContactEmail('');
+        setContactMunicipality('');
+        setContactDetails('');
+      })
+      .catch((err) => {
+        console.error('Contact submission failed:', err);
+        setIsSubmittingContact(false);
+        const errMsg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to submit request. Please try again.';
+        setContactError(errMsg);
+      });
   };
 
   const faqs = [
@@ -471,7 +508,7 @@ export default function LandingPage() {
 
             {!contactSubmitted ? (
               <form 
-                onSubmit={(e) => { e.preventDefault(); setContactSubmitted(true); }}
+                onSubmit={handleContactSubmit}
                 className="space-y-4 text-left"
               >
                 <div className="space-y-1">
@@ -479,25 +516,59 @@ export default function LandingPage() {
                   <p className="text-xs text-text-secondary">Request custom ward dashboards or pilot integration details.</p>
                 </div>
 
+                {contactError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-button text-red-700 text-xs font-semibold">
+                    {contactError}
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   <div>
                     <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Name</label>
-                    <input required type="text" placeholder="Rohan Sharma" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="Rohan Sharma" 
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" 
+                    />
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Official Email</label>
-                    <input required type="email" placeholder="rohan@ahmedabadmunicipal.gov.in" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                    <input 
+                      required 
+                      type="email" 
+                      placeholder="rohan@ahmedabadmunicipal.gov.in" 
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" 
+                    />
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Municipality / City</label>
-                    <input required type="text" placeholder="Ahmedabad Municipal Corporation" className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="Ahmedabad Municipal Corporation" 
+                      value={contactMunicipality}
+                      onChange={(e) => setContactMunicipality(e.target.value)}
+                      className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" 
+                    />
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Request Details</label>
-                    <textarea required rows={3} placeholder="We would like to request a demo of the municipal dashboard for our city zone..." className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" />
+                    <textarea 
+                      required 
+                      rows={3} 
+                      placeholder="We would like to request a demo of the municipal dashboard for our city zone..." 
+                      value={contactDetails}
+                      onChange={(e) => setContactDetails(e.target.value)}
+                      className="w-full border border-gray-200 rounded-button px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary bg-white/80" 
+                    />
                   </div>
                 </div>
 
@@ -506,14 +577,23 @@ export default function LandingPage() {
                     type="button"
                     onClick={() => setShowContactModal(false)}
                     className="flex-1 py-2.5 border border-gray-200 text-xs font-bold text-text-primary rounded-button bg-white hover:bg-gray-50 transition-colors text-center"
+                    disabled={isSubmittingContact}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 bg-primary hover:bg-primary/95 text-white text-xs font-extrabold rounded-button shadow-md shadow-primary/10 transition-colors text-center"
+                    className="flex-1 py-2.5 bg-primary hover:bg-primary/95 text-white text-xs font-extrabold rounded-button shadow-md shadow-primary/10 transition-colors text-center flex items-center justify-center gap-1.5"
+                    disabled={isSubmittingContact}
                   >
-                    Submit Request
+                    {isSubmittingContact ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <span>Submit Request</span>
+                    )}
                   </button>
                 </div>
               </form>
