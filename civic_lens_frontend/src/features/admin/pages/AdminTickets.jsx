@@ -3,6 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit3, Trash2, ShieldAlert, Loader2, AlertCircle, X, Check, Save } from 'lucide-react';
 import api from '../../../services/api';
 
+function ImageWithFallback({ src, alt, className }) {
+  const [hasError, setHasError] = useState(false);
+
+  return !hasError ? (
+    <img 
+      src={src} 
+      alt={alt} 
+      className={className} 
+      onError={() => setHasError(true)} 
+    />
+  ) : (
+    <div className="w-full h-full bg-[#0E131F] flex flex-col justify-center items-center text-center p-3 select-none text-gray-500 border border-gray-800 rounded-card">
+      <span className="text-[9px] font-bold text-amber-500/80 uppercase tracking-widest mb-1">Image Offline</span>
+      <span className="text-[8px]">Unresolved or blocked host</span>
+    </div>
+  );
+}
+
 export default function AdminTickets() {
   const navigate = useNavigate();
   
@@ -15,6 +33,8 @@ export default function AdminTickets() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+
+  const [selectedViewTicket, setSelectedViewTicket] = useState(null);
 
   // Editing state (for override / status change modal)
   const [editingTicket, setEditingTicket] = useState(null);
@@ -35,7 +55,11 @@ export default function AdminTickets() {
 
     api.get('/admin/tickets', { params })
       .then((response) => {
-        setTickets(response.data.data.tickets || []);
+        const loaded = (response.data.data.tickets || []).map(t => ({
+          ...t,
+          id: t.ticket_id
+        }));
+        setTickets(loaded);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -229,7 +253,7 @@ export default function AdminTickets() {
               <tbody className="divide-y divide-gray-800/60 text-gray-300">
                 {tickets.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-800/25 transition-all duration-300">
-                    <td className="px-6 py-4 font-bold text-white font-mono">{t.id}</td>
+                    <td className="px-6 py-4 font-bold text-amber-500 font-mono">#{t.id.slice(-6).toUpperCase()}</td>
                     <td className="px-6 py-4 font-semibold text-white">
                       {t.category ? t.category.charAt(0).toUpperCase() + t.category.slice(1) : 'Unclassified'}
                     </td>
@@ -260,7 +284,7 @@ export default function AdminTickets() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                       <button 
-                        onClick={() => navigate(`/ticket/${t.id}`)}
+                        onClick={() => setSelectedViewTicket(t)}
                         className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-gray-800 transition-colors inline-flex cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
@@ -377,6 +401,112 @@ export default function AdminTickets() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Ticket Detail Modal */}
+      {selectedViewTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedViewTicket(null)} />
+          
+          <div className="bg-[#151B26] border border-gray-800 rounded-card p-6 max-w-lg w-full relative z-10 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <button className="absolute top-4 right-4 text-gray-400 hover:text-white" onClick={() => setSelectedViewTicket(null)}>
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-gray-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <span>Ticket Details</span>
+                <span className="text-xs font-mono text-amber-500 font-bold">#{selectedViewTicket.id.slice(-6).toUpperCase()}</span>
+              </h3>
+            </div>
+
+            {/* Photos Gallery */}
+            {selectedViewTicket.photos && selectedViewTicket.photos.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Submitted Photos</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedViewTicket.photos.map((p, idx) => (
+                    <div key={idx} className="relative rounded-card overflow-hidden border border-gray-800 aspect-video bg-[#0E131F]">
+                      <ImageWithFallback 
+                        src={p.url && (p.url.startsWith('http://') || p.url.startsWith('https://') || p.url.startsWith('data:')) ? p.url : `http://localhost:8000${p.url.startsWith('/') ? '' : '/'}${p.url}`} 
+                        alt="Ticket attachment" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <span className="absolute bottom-1 right-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-gray-300">
+                        Uploaded by {p.uploaded_by}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Metadata Fields Grid */}
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="col-span-2 border-b border-gray-800/40 pb-2">
+                <p className="text-gray-400 font-medium">Full MongoDB Database ID</p>
+                <p className="font-mono text-amber-500/80 text-[11px] select-all mt-0.5">{selectedViewTicket.id}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Category</p>
+                <p className="font-bold text-white capitalize mt-0.5">{selectedViewTicket.category}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Severity</p>
+                <p className="font-bold text-white capitalize mt-0.5">{selectedViewTicket.severity}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Status</p>
+                <span className="inline-flex px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 capitalize mt-0.5">
+                  {selectedViewTicket.status}
+                </span>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Zone Address</p>
+                <p className="font-semibold text-gray-300 mt-0.5 truncate">{selectedViewTicket.address || 'Ahmedabad Grid'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Reports Linked</p>
+                <p className="font-bold text-white mt-0.5">{selectedViewTicket.report_count}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Upvotes / Support</p>
+                <p className="font-bold text-white mt-0.5">{selectedViewTicket.upvote_count} votes</p>
+              </div>
+            </div>
+
+            {/* Status History Timeline */}
+            {selectedViewTicket.status_history && selectedViewTicket.status_history.length > 0 && (
+              <div className="space-y-3 border-t border-gray-800/80 pt-4">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Status Transition Timeline</p>
+                <div className="space-y-3 font-mono text-[11px]">
+                  {selectedViewTicket.status_history.map((h, idx) => (
+                    <div key={idx} className="flex gap-3 items-start">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1 flex-shrink-0" />
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-white capitalize">{h.status}</p>
+                        <p className="text-gray-400 text-[10px]">
+                          By {h.changed_by} on {new Date(h.changed_at).toLocaleString()}
+                        </p>
+                        {h.note && <p className="text-gray-500 text-[10px] italic">"{h.note}"</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end pt-2 border-t border-gray-800/60">
+              <button
+                type="button"
+                onClick={() => setSelectedViewTicket(null)}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-button text-xs font-bold transition-colors cursor-pointer"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </div>
       )}
