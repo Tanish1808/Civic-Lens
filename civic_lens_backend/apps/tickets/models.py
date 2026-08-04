@@ -58,7 +58,13 @@ class Ticket(Document):
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
-        return super().save(*args, **kwargs)
+        res = super().save(*args, **kwargs)
+        try:
+            from apps.analytics.views import invalidate_analytics_cache
+            invalidate_analytics_cache()
+        except Exception:
+            pass
+        return res
 
     def append_status_history(self, status, changed_by, note=None):
         self.status_history.append(
