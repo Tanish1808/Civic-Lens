@@ -1,23 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Upload, Info, CheckCircle2, Loader2, Compass, Layers, AlertCircle, X, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Camera, MapPin, Upload, Info, CheckCircle2, Loader2, 
+  Compass, Layers, AlertCircle, X, ShieldCheck, ShieldAlert, LogIn 
+} from 'lucide-react';
+import api from '../../../services/api';
 
 export default function SubmitReport() {
+  const navigate = useNavigate();
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
   // Form states
   const [selectedCategory, setSelectedCategory] = useState('');
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [latitude, setLatitude] = useState(23.0225);
+  const [longitude, setLongitude] = useState(72.5714);
+  
+  // UI states
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Processing Simulator States
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(1); // 1: upload, 2: classify, 3: merge, 4: done
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [reportResult, setReportResult] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
       setFilePreview(URL.createObjectURL(file));
+      setSubmitError('');
     }
   };
 
@@ -26,47 +42,84 @@ export default function SubmitReport() {
     setFilePreview(null);
   };
 
+  const handleFetchLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    setIsFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(Number(position.coords.latitude.toFixed(6)));
+        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setIsFetchingLocation(false);
+      },
+      (error) => {
+        console.error("Error fetching coordinates", error);
+        setIsFetchingLocation(false);
+        alert("Unable to fetch location. Defaulting to Ahmedabad center.");
+      }
+    );
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!selectedFile) {
+      setSubmitError('Please select or capture a photo of the issue.');
+      return;
+    }
+    setSubmitError('');
     setIsProcessing(true);
     setProcessingStep(1);
     setUploadProgress(0);
-  };
 
-  // Simulate the multi-step AI process pipeline
-  useEffect(() => {
-    if (!isProcessing) return;
-
-    let timer;
-    if (processingStep === 1) {
-      // Simulate file upload progress bar
-      timer = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            setProcessingStep(2);
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 250);
-    } else if (processingStep === 2) {
-      // Simulate ML classification running
-      timer = setTimeout(() => {
-        setProcessingStep(3);
-      }, 2000);
-    } else if (processingStep === 3) {
-      // Simulate duplicate check sonar query
-      timer = setTimeout(() => {
-        setProcessingStep(4);
-      }, 2000);
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    
+    if (selectedCategory) {
+      formData.append('user_selected_category', selectedCategory);
+    }
+    if (description) {
+      formData.append('description', description);
     }
 
-    return () => {
-      clearInterval(timer);
-      clearTimeout(timer);
-    };
-  }, [isProcessing, processingStep]);
+    // Axios post request with upload progress binding
+    api.post('/reports', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(percentCompleted);
+        if (percentCompleted >= 100) {
+          // Slow down step changes slightly so the user sees the transitions
+          setTimeout(() => setProcessingStep(2), 800);
+        }
+      }
+    })
+      .then((response) => {
+        setReportResult(response.data.data);
+        
+        // Simulate pipeline analysis states for visual confirmation
+        setTimeout(() => {
+          setProcessingStep(3);
+          setTimeout(() => {
+            setProcessingStep(4);
+          }, 1200);
+        }, 1200);
+      })
+      .catch((err) => {
+        console.error('Error submitting report:', err);
+        setIsProcessing(false);
+        if (err.response && err.response.data) {
+          setSubmitError(err.response.data.message || 'Failed to submit report. Please review form entries.');
+        } else {
+          setSubmitError('Unable to connect to the server. Please check your connection.');
+        }
+      });
+  };
 
   const resetForm = () => {
     setSelectedFile(null);
@@ -76,7 +129,33 @@ export default function SubmitReport() {
     setIsProcessing(false);
     setProcessingStep(1);
     setUploadProgress(0);
+    setReportResult(null);
   };
+
+  // If citizen is not logged in, prompt them to sign in
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-16 bg-white rounded-card border border-gray-150 p-8 text-center space-y-6 shadow-2xl">
+        <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-text-primary">Authentication Required</h2>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            To submit municipal reports, attach location coordinates, and participate in local problem solving, you must sign in.
+          </p>
+        </div>
+        <Link
+          to="/login"
+          state={{ from: '/report-issue' }}
+          className="w-full flex items-center justify-center gap-1.5 py-3 px-4 font-bold text-xs bg-primary text-white hover:bg-primary/95 rounded-button shadow-md shadow-primary/10 transition-all active:scale-97 cursor-pointer hover:scale-[1.02]"
+        >
+          <span>Sign In to Continue</span>
+          <LogIn className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -88,6 +167,13 @@ export default function SubmitReport() {
           <p className="text-sm text-text-secondary mb-6">
             Submit a photo and geotag of the infrastructure issue. Our AI will automatically classify category, severity, and merge duplicates.
           </p>
+
+          {submitError && (
+            <div className="mb-6 flex items-start gap-2.5 p-3.5 bg-red-50 text-red-950 border border-red-200 rounded-card text-xs leading-relaxed animate-in fade-in duration-200">
+              <AlertCircle className="w-4.5 h-4.5 flex-shrink-0 text-red-500 mt-0.5" />
+              <p className="font-semibold">{submitError}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Custom Drag-and-Drop / Camera Area */}
@@ -111,7 +197,6 @@ export default function SubmitReport() {
                           type="file" 
                           className="sr-only" 
                           accept="image/*" 
-                          required 
                           onChange={handleFileChange}
                         />
                       </label>
@@ -146,14 +231,16 @@ export default function SubmitReport() {
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 items-center">
-                <div className="flex-1 bg-white border border-gray-200 rounded-button px-3.5 py-2 text-xs font-mono text-text-secondary w-full">
-                  Latitude: 23.0225 | Longitude: 72.5714
+                <div className="flex-1 bg-white border border-gray-200 rounded-button px-3.5 py-2.5 text-xs font-mono text-text-secondary w-full">
+                  Latitude: {latitude} | Longitude: {longitude}
                 </div>
                 <button
                   type="button"
-                  className="w-full sm:w-auto px-4 py-2 text-xs font-bold text-primary hover:bg-primary/10 border border-primary/20 bg-primary/5 rounded-button transition-colors whitespace-nowrap"
+                  onClick={handleFetchLocation}
+                  disabled={isFetchingLocation}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/10 border border-primary/20 bg-primary/5 rounded-button transition-colors whitespace-nowrap disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  Fetch Location
+                  {isFetchingLocation ? 'Fetching...' : 'Fetch Location'}
                 </button>
               </div>
             </div>
@@ -208,7 +295,7 @@ export default function SubmitReport() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-button shadow-md text-sm font-bold text-white bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-98"
+                className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-button shadow-md text-sm font-bold text-white bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-98"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 <span>Submit Civic Report</span>
@@ -258,7 +345,7 @@ export default function SubmitReport() {
                 processingStep > 2 
                   ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
                   : processingStep === 2
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse'
                   : 'bg-gray-800 text-gray-600 border border-gray-800'
               }`}>
                 {processingStep > 2 ? (
@@ -274,7 +361,7 @@ export default function SubmitReport() {
                 {processingStep === 2 && <p className="text-[11px] text-amber-500/80 animate-pulse">Analyzing category & severity flags...</p>}
                 {processingStep > 2 && (
                   <p className="text-[11px] text-gray-500 font-semibold">
-                    Category: <span className="text-white">Pothole (98.6% Conf.)</span> | Severity: <span className="text-red-400">High</span>
+                    Category: <span className="text-white capitalize">{selectedCategory || 'Classified automatically'}</span>
                   </p>
                 )}
               </div>
@@ -286,13 +373,13 @@ export default function SubmitReport() {
                 processingStep > 3 
                   ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
                   : processingStep === 3
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse'
+                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse animate-bounce'
                   : 'bg-gray-800 text-gray-600 border border-gray-800'
               }`}>
                 {processingStep > 3 ? (
                   <CheckCircle2 className="w-4 h-4 animate-in zoom-in" />
                 ) : processingStep === 3 ? (
-                  <Layers className="w-4 h-4 animate-bounce" />
+                  <Layers className="w-4 h-4" />
                 ) : (
                   <Layers className="w-4 h-4" />
                 )}
@@ -302,7 +389,10 @@ export default function SubmitReport() {
                 {processingStep === 3 && <p className="text-[11px] text-amber-500/80 animate-pulse">Running MongoDB 2dsphere check...</p>}
                 {processingStep > 3 && (
                   <p className="text-[11px] text-gray-500">
-                    Duplicate found within 20m. Merged into <span className="text-amber-500 font-semibold">Ticket #104</span>.
+                    {reportResult?.status === 'merged' 
+                      ? 'Geospatial duplicate found! Merged into master ticket.'
+                      : 'No duplicates found. New ticket registered successfully.'
+                    }
                   </p>
                 )}
               </div>
@@ -316,22 +406,29 @@ export default function SubmitReport() {
               <div className="flex gap-2.5 text-xs text-green-400 items-start leading-relaxed font-semibold">
                 <ShieldCheck className="w-5 h-5 flex-shrink-0" />
                 <p>
-                  Thanks for contributing! Your report has been merged with Ticket #104. Commuters upvotes now total 13, increasing resolution priority.
+                  {reportResult?.status === 'manual_review'
+                    ? 'Report logged successfully! Because ML service is offline, your ticket is routed to the Manual Review Queue for classification.'
+                    : reportResult?.status === 'merged'
+                    ? 'Duplicate check matched! Your report has been merged with an active ticket, raising its resolution priority.'
+                    : 'Report registered successfully! A new ticket has been opened for investigation.'
+                  }
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={resetForm}
-                  className="flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded-button text-xs font-semibold transition-colors text-center"
+                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-button text-xs font-semibold transition-colors text-center cursor-pointer"
                 >
                   Report Another
                 </button>
-                <button
-                  onClick={() => alert('Redirecting to ticket details.')}
-                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-[#0B0F19] rounded-button text-xs font-bold transition-colors text-center"
-                >
-                  View Ticket
-                </button>
+                {reportResult?.ticket_id && (
+                  <Link
+                    to={`/ticket/${reportResult.ticket_id}`}
+                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-[#0B0F19] rounded-button text-xs font-bold transition-all duration-300 hover:scale-[1.02] active:scale-97 text-center cursor-pointer"
+                  >
+                    View Ticket
+                  </Link>
+                )}
               </div>
             </div>
           )}
