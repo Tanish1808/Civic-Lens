@@ -204,3 +204,39 @@ class MeView(APIView):
             setattr(user, field, value)
         user.save()
         return success(user.to_public_dict())
+
+
+class LeaderboardView(APIView):
+    """GET /api/v1/users/leaderboard — public citizen rankings list."""
+
+    def get(self, request):
+        from apps.reports.models import Report
+        from apps.tickets.models import Upvote
+
+        top_users = User.objects(is_active=True).order_by("-civic_score")[:10]
+        data = []
+        for rank, u in enumerate(top_users, 1):
+            reports_count = Report.objects(user_id=str(u.id)).count()
+            upvotes_count = Upvote.objects(user_id=str(u.id)).count()
+
+            # Dynamic badge thresholds
+            if u.civic_score >= 100:
+                badge = "Civic Sentinel"
+            elif u.civic_score >= 50:
+                badge = "Ward Advocate"
+            elif u.civic_score >= 20:
+                badge = "Community Hero"
+            else:
+                badge = "Active Citizen"
+
+            data.append(
+                {
+                    "rank": rank,
+                    "name": u.full_name or u.email.split("@")[0].capitalize(),
+                    "points": u.civic_score,
+                    "reports": reports_count,
+                    "verifications": upvotes_count,
+                    "badge": badge,
+                }
+            )
+        return success(data)
