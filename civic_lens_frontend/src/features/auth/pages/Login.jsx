@@ -83,6 +83,15 @@ export default function Login() {
         setIsLoading(false);
         const { access_token, role } = response.data.data;
 
+        // Decode JWT payload to retrieve user ID and email
+        try {
+          const payload = JSON.parse(atob(access_token.split('.')[1]));
+          sessionStorage.setItem('userId', payload.sub);
+          sessionStorage.setItem('userEmail', payload.email);
+        } catch (e) {
+          console.error('Failed to parse JWT payload', e);
+        }
+
         sessionStorage.setItem('token', access_token);
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userRole', role);

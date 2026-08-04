@@ -26,6 +26,15 @@ export default function AdminLogin() {
           return;
         }
 
+        // Decode JWT payload to retrieve user ID and email
+        try {
+          const payload = JSON.parse(atob(access_token.split('.')[1]));
+          sessionStorage.setItem('userId', payload.sub);
+          sessionStorage.setItem('userEmail', payload.email);
+        } catch (e) {
+          console.error('Failed to parse JWT payload', e);
+        }
+
         sessionStorage.setItem('token', access_token);
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userRole', role);
