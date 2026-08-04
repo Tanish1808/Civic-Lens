@@ -58,6 +58,8 @@ class Report(Document):
             "ml_severity": self.ml_severity,
             "status": self.status,
             "ticket_id": self.merged_into_ticket_id,
+            "description": self.description,
+            "location": self.location,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
