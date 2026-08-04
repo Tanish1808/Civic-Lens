@@ -8,6 +8,7 @@ from mongoengine import (
     BooleanField,
     DateTimeField,
     Document,
+    EmailField,
     IntField,
     StringField,
 )
@@ -71,4 +72,26 @@ class RefreshToken(Document):
     created_at = DateTimeField(default=datetime.datetime.utcnow)
 
     meta = {"collection": "refresh_tokens", "indexes": ["jti", "user_id"]}
+
+
+class SupportRequest(Document):
+    name = StringField(required=True, max_length=100)
+    email = EmailField(required=True, max_length=150)
+    municipality = StringField(required=True, max_length=150)
+    details = StringField(required=True, max_length=1000)
+    status = StringField(default="pending", choices=["pending", "processed"])
+    created_at = DateTimeField(default=datetime.datetime.utcnow)
+
+    meta = {"collection": "support_requests", "indexes": ["status", "created_at"]}
+
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "email": self.email,
+            "municipality": self.municipality,
+            "details": self.details,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 

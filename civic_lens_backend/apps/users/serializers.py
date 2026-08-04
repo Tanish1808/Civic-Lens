@@ -31,3 +31,10 @@ class UserUpdateSerializer(serializers.Serializer):
 
     def validate_phone(self, value):
         return validate_phone(value) if value else value
+
+
+class SupportRequestSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    email = serializers.EmailField(max_length=150)
+    municipality = serializers.CharField(max_length=150)
+    details = serializers.CharField(max_length=1000)
