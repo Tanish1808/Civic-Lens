@@ -20,6 +20,7 @@ import AdminTickets from '../features/admin/pages/AdminTickets';
 import AdminAnalytics from '../features/admin/pages/AdminAnalytics';
 import ManualReviewQueue from '../features/admin/pages/ManualReviewQueue';
 import AdminAuditLog from '../features/admin/pages/AdminAuditLog';
+import AdminRequests from '../features/admin/pages/AdminRequests';
 
 // Route protection wrapper
 function ProtectedRoute({ children }) {
@@ -91,6 +92,7 @@ export default function AppRoutes() {
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/review-queue" element={<ManualReviewQueue />} />
         <Route path="/admin/audit-log" element={<AdminAuditLog />} />
+        <Route path="/admin/requests" element={<AdminRequests />} />
       </Route>
     </Routes>
   );

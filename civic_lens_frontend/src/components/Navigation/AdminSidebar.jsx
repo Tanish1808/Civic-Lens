@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, ArrowLeft, User } from 'lucide-react';
+import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, ArrowLeft, User, Mail } from 'lucide-react';
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -70,6 +70,11 @@ export default function AdminSidebar() {
           <NavLink to="/admin/audit-log" className={activeStyle}>
             <FileClock className="w-4 h-4" />
             <span>Audit Logs</span>
+          </NavLink>
+
+          <NavLink to="/admin/requests" className={activeStyle}>
+            <Mail className="w-4 h-4" />
+            <span>Pending Requests</span>
           </NavLink>
         </nav>
       </div>
