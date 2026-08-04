@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
+import Navbar from '../components/Navigation/Navbar';
 import AdminSidebar from '../components/Navigation/AdminSidebar';
+
+// Citizen Pages
+import LandingPage from '../features/dashboard/pages/LandingPage';
+import MapDashboard from '../features/dashboard/pages/MapDashboard';
+import SubmitReport from '../features/report/pages/SubmitReport';
+import TicketDetail from '../features/ticket/pages/TicketDetail';
+import MyReports from '../features/ticket/pages/MyReports';
+import Login from '../features/auth/pages/Login';
+import Signup from '../features/auth/pages/Signup';
+import Leaderboard from '../features/dashboard/pages/Leaderboard';
+
+// Admin Pages
 import AdminLogin from '../features/auth/pages/AdminLogin';
 import AdminOverview from '../features/admin/pages/AdminOverview';
 import AdminTickets from '../features/admin/pages/AdminTickets';
@@ -8,6 +21,36 @@ import AdminAnalytics from '../features/admin/pages/AdminAnalytics';
 import ManualReviewQueue from '../features/admin/pages/ManualReviewQueue';
 import AdminAuditLog from '../features/admin/pages/AdminAuditLog';
 import AdminRequests from '../features/admin/pages/AdminRequests';
+
+// Route protection wrapper for Citizens
+function ProtectedRoute({ children }) {
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return (
+      <Navigate 
+        to="/login" 
+        state={{ from: location, message: 'Please sign in to access that page.' }} 
+        replace 
+      />
+    );
+  }
+
+  return children;
+}
+
+// Layout for Citizen views
+function PublicLayout() {
+  return (
+    <div className="flex flex-col min-h-screen bg-bg-light">
+      <Navbar />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
 
 // Layout for Admin views
 function AdminLayout() {
@@ -47,8 +90,19 @@ function AdminLayout() {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirects to admin overview */}
-      <Route path="/" element={<Navigate to="/admin/overview" replace />} />
+      {/* Public/Citizen routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<MapDashboard />} />
+        <Route path="/ticket/:id" element={<TicketDetail />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        {/* Protected citizen routes */}
+        <Route path="/report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
+        <Route path="/my-reports" element={<ProtectedRoute><MyReports /></ProtectedRoute>} />
+      </Route>
 
       {/* Standalone Admin Login route */}
       <Route path="/admin/login" element={<AdminLogin />} />
