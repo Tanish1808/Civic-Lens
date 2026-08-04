@@ -19,6 +19,7 @@ class AuditLog(Document):
 
     def to_dict(self):
         return {
+            "id": str(self.id),
             "actor_id": self.actor_id,
             "action_type": self.action_type,
             "target_ticket_id": self.target_ticket_id,
