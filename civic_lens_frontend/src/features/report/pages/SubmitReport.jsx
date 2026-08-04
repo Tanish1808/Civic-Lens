@@ -21,6 +21,7 @@ export default function SubmitReport() {
   // UI states
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   // Processing Simulator States
   const [isProcessing, setIsProcessing] = useState(false);
@@ -40,6 +41,31 @@ export default function SubmitReport() {
   const removeFile = () => {
     setSelectedFile(null);
     setFilePreview(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+        setFilePreview(URL.createObjectURL(file));
+        setSubmitError('');
+      } else {
+        setSubmitError('Invalid file type. Please drop an image file.');
+      }
+    }
   };
 
   const handleFetchLocation = () => {
@@ -184,7 +210,16 @@ export default function SubmitReport() {
               </label>
 
               {!filePreview ? (
-                <div className="flex justify-center px-6 pt-8 pb-8 border-2 border-gray-200 border-dashed rounded-card hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer relative group">
+                <div 
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-card transition-all duration-300 cursor-pointer relative group ${
+                    isDragging
+                      ? 'border-primary bg-primary/10 scale-[1.01]'
+                      : 'border-gray-200 hover:border-primary hover:bg-primary/5'
+                  }`}
+                >
                   <div className="space-y-2 text-center">
                     <div className="mx-auto h-12 w-12 text-gray-400 group-hover:text-primary group-hover:scale-105 transition-all duration-300 flex items-center justify-center bg-gray-50 rounded-full">
                       <Camera className="w-6 h-6" />
