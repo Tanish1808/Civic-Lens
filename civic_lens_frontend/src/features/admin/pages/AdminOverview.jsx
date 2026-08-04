@@ -11,7 +11,13 @@ export default function AdminOverview() {
   const [isDeduplicating, setIsDeduplicating] = useState(false);
 
   // States for API data
-  const [kpis, setKpis] = useState([]);
+  const [kpis, setKpis] = useState([
+    { label: 'Total Tickets', value: '0', icon: ListChecks, color: 'text-blue-500 border-blue-500/20 shadow-blue-500/5', bg: 'bg-blue-500/10', trend: 'Total logs' },
+    { label: 'Unresolved Count', value: '0', icon: AlertOctagon, color: 'text-red-500 border-red-500/20 shadow-red-500/5', bg: 'bg-red-500/10', trend: 'Awaiting resolution' },
+    { label: 'Avg Resolution Speed', value: 'N/A', icon: Clock, color: 'text-green-500 border-green-500/20 shadow-green-500/5', bg: 'bg-green-500/10', trend: 'Clearance rate' },
+    { label: 'Top Issue Category', value: 'None', icon: TrendingUp, color: 'text-amber-500 border-amber-500/20 shadow-amber-500/5', bg: 'bg-amber-500/10', trend: 'Model consensus' },
+    { label: 'Most Affected Area', value: 'Ahmedabad Grid', icon: MapPin, color: 'text-purple-500 border-purple-500/20 shadow-purple-500/5', bg: 'bg-purple-500/10', trend: 'Pilot territory' },
+  ]);
   const [recentIncidents, setRecentIncidents] = useState([]);
   const [wardStats, setWardStats] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,17 +122,6 @@ export default function AdminOverview() {
     }, 2500);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#0E131F] text-white space-y-4">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">
-          Connecting Command Center...
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-8 space-y-8 flex-1 overflow-y-auto bg-[#0E131F] text-white min-h-screen">
       
@@ -136,6 +131,7 @@ export default function AdminOverview() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
             <h1 className="text-2xl font-extrabold text-white tracking-tight">Municipal Command Center</h1>
+            {isLoading && <Loader2 className="w-4 h-4 text-amber-500 animate-spin ml-2" />}
           </div>
           <p className="text-sm text-gray-400">Real-time status summaries, duplicate metrics, and automated review queues.</p>
         </div>

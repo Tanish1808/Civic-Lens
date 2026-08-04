@@ -55,6 +55,13 @@ function PublicLayout() {
 
 // Layout for Admin views
 function AdminLayout() {
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+  const role = sessionStorage.getItem('userRole');
+
+  if (!isLoggedIn || role !== 'admin') {
+    return <Navigate to="/admin/login" replace />;
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-900 text-white overflow-hidden">
       <AdminSidebar />
