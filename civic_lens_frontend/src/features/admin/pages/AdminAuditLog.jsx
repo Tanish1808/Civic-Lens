@@ -119,7 +119,7 @@ export default function AdminAuditLog() {
                       <td className="px-6 py-4 text-gray-400 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-primary" />
-                          <span>{log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A'}</span>
+                          <span>{log.created_at ? new Date(log.created_at.endsWith('Z') || log.created_at.includes('+') || log.created_at.includes('-') ? log.created_at : `${log.created_at}Z`).toLocaleString() : 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-white font-semibold whitespace-nowrap">

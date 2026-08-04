@@ -430,7 +430,11 @@ export default function AdminTickets() {
                   {selectedViewTicket.photos.map((p, idx) => (
                     <div key={idx} className="relative rounded-card overflow-hidden border border-gray-800 aspect-video bg-[#0E131F]">
                       <ImageWithFallback 
-                        src={p.url && (p.url.startsWith('http://') || p.url.startsWith('https://') || p.url.startsWith('data:')) ? p.url : `http://localhost:8000${p.url.startsWith('/') ? '' : '/'}${p.url}`} 
+                        src={p.url ? (
+                          (p.url.startsWith('http://') || p.url.startsWith('https://') || p.url.startsWith('data:'))
+                            ? p.url 
+                            : `http://localhost:8000${p.url.startsWith('/') ? '' : '/'}${p.url}`
+                        ) : ''} 
                         alt="Ticket attachment" 
                         className="w-full h-full object-cover" 
                       />
@@ -488,7 +492,7 @@ export default function AdminTickets() {
                       <div className="space-y-0.5">
                         <p className="font-bold text-white capitalize">{h.status}</p>
                         <p className="text-gray-400 text-[10px]">
-                          By {h.changed_by} on {new Date(h.changed_at).toLocaleString()}
+                          By {h.changed_by} on {new Date(h.changed_at && (h.changed_at.endsWith('Z') || h.changed_at.includes('+') || h.changed_at.includes('-')) ? h.changed_at : `${h.changed_at}Z`).toLocaleString()}
                         </p>
                         {h.note && <p className="text-gray-500 text-[10px] italic">"{h.note}"</p>}
                       </div>

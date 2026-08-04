@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Check, Ban, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import api from '../../../services/api';
 
+function ImageWithFallback({ src, alt, className }) {
+  const [hasError, setHasError] = useState(false);
+
+  return !hasError ? (
+    <img 
+      src={src} 
+      alt={alt} 
+      className={className} 
+      onError={() => setHasError(true)} 
+    />
+  ) : (
+    <div className="w-full h-full bg-[#0E131F] flex flex-col justify-center items-center text-center p-3 select-none text-gray-500 border border-gray-800 rounded-card">
+      <span className="text-[9px] font-bold text-amber-500/80 uppercase tracking-widest mb-1">Image Offline</span>
+      <span className="text-[8px]">Unresolved or blocked host</span>
+    </div>
+  );
+}
+
 export default function ManualReviewQueue() {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -147,8 +165,12 @@ export default function ManualReviewQueue() {
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-5">
                   {/* Photo preview (5 columns) */}
                   <div className="sm:col-span-5 aspect-square rounded-card overflow-hidden bg-gray-900 border border-gray-800/60 relative flex items-center justify-center">
-                    <img 
-                      src={r.photo_url || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=300&q=80'} 
+                    <ImageWithFallback 
+                      src={r.photo_url ? (
+                        (r.photo_url.startsWith('http://') || r.photo_url.startsWith('https://') || r.photo_url.startsWith('data:'))
+                          ? r.photo_url 
+                          : `http://localhost:8000${r.photo_url.startsWith('/') ? '' : '/'}${r.photo_url}`
+                      ) : ''} 
                       alt="Low confidence upload" 
                       className="w-full h-full object-cover" 
                     />
@@ -165,7 +187,7 @@ export default function ManualReviewQueue() {
                         Reported Timestamp
                       </label>
                       <div className="bg-[#151B26] border border-gray-800 rounded-button px-3.5 py-2 text-xs font-mono font-semibold text-gray-300">
-                        {r.created_at ? new Date(r.created_at).toLocaleString() : 'Recently'}
+                        {r.created_at ? new Date(r.created_at.endsWith('Z') || r.created_at.includes('+') || r.created_at.includes('-') ? r.created_at : `${r.created_at}Z`).toLocaleString() : 'Recently'}
                       </div>
                     </div>
 
