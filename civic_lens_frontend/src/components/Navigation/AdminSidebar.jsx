@@ -20,13 +20,17 @@ export default function AdminSidebar() {
         : 'text-gray-400 hover:text-white hover:bg-gray-800/40 border-l-4 border-transparent'
     }`;
 
+  const userName = sessionStorage.getItem('userName') || 'Anand Kumar';
+  const userEmail = sessionStorage.getItem('userEmail') || 'admin@civiclens.gov';
+
   return (
-    <aside className="w-64 bg-[#0B0F19] text-white min-h-screen flex flex-col justify-between border-r border-gray-800/50">
-      <div className="p-6 space-y-8">
-        {/* Brand Header */}
-        <div className="flex items-center gap-3">
-          <div className="bg-amber-500 p-2 rounded-card text-[#0B0F19] shadow-md shadow-amber-500/20 animate-pulse">
-            <LayoutDashboard className="w-5 h-5" />
+    <aside className="w-64 bg-[#0B0F19] border-r border-gray-850 p-6 flex flex-col justify-between h-screen flex-shrink-0 text-white select-none">
+      
+      <div className="space-y-6">
+        {/* Brand Info */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="bg-amber-500 text-black w-8 h-8 rounded flex items-center justify-center font-bold">
+            CL
           </div>
           <div>
             <h2 className="text-md font-extrabold tracking-tight">Civic Lens</h2>
@@ -40,8 +44,8 @@ export default function AdminSidebar() {
             <User className="w-4 h-4 text-amber-500" />
           </div>
           <div className="overflow-hidden">
-            <h4 className="text-xs font-bold truncate">Anand Kumar</h4>
-            <p className="text-[10px] text-gray-400 truncate">Superintendent Eng.</p>
+            <h4 className="text-xs font-bold truncate">{userName}</h4>
+            <p className="text-[10px] text-gray-400 truncate">{userEmail}</p>
           </div>
         </div>
 
