@@ -10,12 +10,14 @@ from common.exceptions import ApplicationError
 from common.response import error, success
 from common.throttling import ScopedActionThrottle
 
-from .models import RefreshToken, User
+from common.permissions import IsAdmin
+from .models import RefreshToken, User, SupportRequest
 from .serializers import (
     GoogleAuthSerializer,
     LoginSerializer,
     SignupSerializer,
     UserUpdateSerializer,
+    SupportRequestSerializer,
 )
 
 REFRESH_COOKIE_KWARGS = dict(
@@ -240,3 +242,47 @@ class LeaderboardView(APIView):
                 }
             )
         return success(data)
+
+
+class SupportRequestCreateView(APIView):
+    throttle_classes = [ScopedActionThrottle]
+    throttle_scope = "support_request"
+
+    def post(self, request):
+        serializer = SupportRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        req = SupportRequest(
+            name=data["name"],
+            email=data["email"],
+            municipality=data["municipality"],
+            details=data["details"],
+        )
+        req.save()
+
+        return success({"message": "Request submitted successfully."}, status=201)
+
+
+class AdminSupportRequestListView(APIView):
+    def get(self, request):
+        if not IsAdmin().has_permission(request, self):
+            return error("FORBIDDEN", "Admin role required.", status=403)
+
+        requests = SupportRequest.objects.order_by("-created_at")
+        return success([r.to_dict() for r in requests])
+
+
+class AdminSupportRequestProcessView(APIView):
+    def post(self, request, request_id):
+        if not IsAdmin().has_permission(request, self):
+            return error("FORBIDDEN", "Admin role required.", status=403)
+
+        req = SupportRequest.objects(id=request_id).first()
+        if not req:
+            return error("NOT_FOUND", "Request not found.", status=404)
+
+        req.status = "processed"
+        req.save()
+
+        return success(req.to_dict())
