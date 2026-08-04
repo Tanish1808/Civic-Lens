@@ -1,37 +1,98 @@
-import React from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, BarChart3, PieChartIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
+import { TrendingUp, BarChart3, PieChartIcon, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function AdminAnalytics() {
-  
-  // Mock Resolution Trend Data
-  const trendData = [
-    { name: 'Mon', reported: 12, resolved: 8 },
-    { name: 'Tue', reported: 18, resolved: 10 },
-    { name: 'Wed', reported: 15, resolved: 14 },
-    { name: 'Thu', reported: 22, resolved: 16 },
-    { name: 'Fri', reported: 30, resolved: 24 },
-    { name: 'Sat', reported: 10, resolved: 18 },
-    { name: 'Sun', reported: 8, resolved: 12 },
-  ];
+  const [trendData, setTrendData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [severityData, setSeverityData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Category Distribution
-  const categoryData = [
-    { name: 'Pothole', count: 48, fill: '#1E5F8C' },
-    { name: 'Garbage', count: 32, fill: '#E8A33D' },
-    { name: 'Waterlogging', count: 28, fill: '#9C27B0' },
-    { name: 'Streetlight', count: 18, fill: '#4CAF50' },
-  ];
+  useEffect(() => {
+    setIsLoading(true);
+    Promise.all([
+      api.get('/admin/analytics/resolution-trend'),
+      api.get('/admin/analytics/category-breakdown'),
+      api.get('/admin/analytics/severity-distribution')
+    ])
+      .then(([trendRes, catRes, sevRes]) => {
+        // 1. Process Trend Data
+        const rawTrends = trendRes.data.data.trend || [];
+        const trends = rawTrends.map(t => ({
+          name: t.period,
+          reported: t.created_count,
+          resolved: t.resolved_count
+        }));
+        
+        // Fallback standard data if database is brand new and empty of tickets
+        setTrendData(trends.length > 0 ? trends : [
+          { name: 'Mon', reported: 1, resolved: 0 },
+          { name: 'Tue', reported: 3, resolved: 1 },
+          { name: 'Wed', reported: 2, resolved: 2 },
+          { name: 'Thu', reported: 4, resolved: 3 }
+        ]);
 
-  // Severity Distribution
-  const severityData = [
-    { name: 'High', value: 45, color: '#D64545' },
-    { name: 'Medium', value: 35, color: '#E8A33D' },
-    { name: 'Low', value: 20, color: '#4CAF7D' },
-  ];
+        // 2. Process Categories Data
+        const categoryFills = {
+          pothole: '#1E5F8C',
+          garbage: '#E8A33D',
+          waterlogging: '#9C27B0',
+          streetlight: '#4CAF50',
+          other: '#795548'
+        };
+        const rawCats = catRes.data.data.breakdown || [];
+        const categories = rawCats.map(c => ({
+          name: c.category.charAt(0).toUpperCase() + c.category.slice(1),
+          count: c.count,
+          fill: categoryFills[c.category.toLowerCase()] || '#607D8B'
+        }));
+        setCategoryData(categories.length > 0 ? categories : [
+          { name: 'Pothole', count: 0, fill: '#1E5F8C' },
+          { name: 'Garbage', count: 0, fill: '#E8A33D' },
+          { name: 'Waterlogging', count: 0, fill: '#9C27B0' },
+          { name: 'Streetlight', count: 0, fill: '#4CAF50' }
+        ]);
+
+        // 3. Process Severity Data
+        const severityColors = {
+          high: '#D64545',
+          medium: '#E8A33D',
+          low: '#4CAF7D'
+        };
+        const rawSevs = sevRes.data.data.distribution || [];
+        const severities = rawSevs.map(s => ({
+          name: s.severity.charAt(0).toUpperCase() + s.severity.slice(1),
+          value: s.count,
+          color: severityColors[s.severity.toLowerCase()] || '#607D8B'
+        }));
+        setSeverityData(severities.length > 0 ? severities : [
+          { name: 'High', value: 1, color: '#D64545' },
+          { name: 'Medium', value: 0, color: '#E8A33D' },
+          { name: 'Low', value: 0, color: '#4CAF7D' }
+        ]);
+
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load admin analytics datasets:', err);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#0E131F] text-white space-y-4">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+          Computing telemetry charts...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 space-y-8 flex-1 overflow-y-auto bg-[#0E131F] text-white">
+    <div className="p-8 space-y-8 flex-1 overflow-y-auto bg-[#0E131F] text-white min-h-screen">
       
       {/* Header */}
       <div className="space-y-1">
@@ -101,33 +162,43 @@ export default function AdminAnalytics() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
-        {/* Category bar distribution (12 Columns) */}
-        <div className="lg:col-span-12 bg-[#151B26]/30 border border-gray-800/80 rounded-card p-6 shadow-2xl backdrop-blur-md space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-amber-500" />
-            <span>Tickets Counts by Category</span>
-          </h2>
-          <div className="h-72 w-full text-xs">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="#1F2937" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
-                />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {categoryData.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          {/* Custom Legends list */}
+          <div className="flex justify-center gap-4 text-xs font-semibold">
+            {severityData.map((item) => (
+              <div key={item.name} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-gray-400">{item.name} ({item.value})</span>
+              </div>
+            ))}
           </div>
         </div>
 
+      </div>
+
+      {/* Category Load bar chart (12 Columns) */}
+      <div className="bg-[#151B26]/30 border border-gray-800/80 rounded-card p-6 shadow-2xl backdrop-blur-md space-y-4">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-amber-500" />
+          <span>Category-wise Volume Breakdown</span>
+        </h2>
+        <div className="h-72 w-full text-xs">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid stroke="#1F2937" strokeDasharray="3 3" />
+              <XAxis dataKey="name" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" allowDecimals={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
+                cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+              />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
     </div>

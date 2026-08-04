@@ -1,48 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ListChecks, AlertOctagon, TrendingUp, Clock, MapPin, 
-  ArrowRight, Activity, ShieldAlert, Cpu, Sparkles, RefreshCw 
+  ArrowRight, Activity, ShieldAlert, Cpu, Sparkles, RefreshCw, Loader2
 } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function AdminOverview() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDeduplicating, setIsDeduplicating] = useState(false);
 
-  const kpis = [
-    { label: 'Total Tickets', value: '1,248', icon: ListChecks, color: 'text-blue-500 border-blue-500/20 shadow-blue-500/5', bg: 'bg-blue-500/10', trend: '+12% this week' },
-    { label: 'Unresolved Count', value: '87', icon: AlertOctagon, color: 'text-red-500 border-red-500/20 shadow-red-500/5', bg: 'bg-red-500/10', trend: '-3% this week' },
-    { label: 'Avg Resolution Speed', value: '4.2 Days', icon: Clock, color: 'text-green-500 border-green-500/20 shadow-green-500/5', bg: 'bg-green-500/10', trend: '-18% from last month' },
-    { label: 'Top Issue Category', value: 'Pothole (62%)', icon: TrendingUp, color: 'text-amber-500 border-amber-500/20 shadow-amber-500/5', bg: 'bg-amber-500/10', trend: 'Seasonal rise' },
-    { label: 'Most Affected Area', value: 'Sector 4, MG Road', icon: MapPin, color: 'text-purple-500 border-purple-500/20 shadow-purple-500/5', bg: 'bg-purple-500/10', trend: 'Road erosion reported' },
-  ];
+  // States for API data
+  const [kpis, setKpis] = useState([]);
+  const [recentIncidents, setRecentIncidents] = useState([]);
+  const [wardStats, setWardStats] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const recentIncidents = [
-    { id: 1, type: 'auto_merge', msg: 'Duplicate waterlogging reports detected near Subhash subway.', detail: 'Merged 4 tickets into single master ticket #t3', time: '2 min ago', typeLabel: 'Auto Merged', color: 'bg-blue-500/15 text-blue-400 border-blue-500/20' },
-    { id: 2, type: 'ml_alert', msg: 'ML model flagged low categorization confidence on ticket #t12.', detail: 'Routed to Low-Confidence Manual Queue for coordinate resolve', time: '14 min ago', typeLabel: 'ML Manual Route', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
-    { id: 3, type: 'verified', msg: 'Pothole on CG Road crossed auto-verification threshold.', detail: 'Auto-updated status to Verified (12 upvotes logged)', time: '32 min ago', typeLabel: 'Auto Verified', color: 'bg-green-500/15 text-green-400 border-green-500/20' },
-    { id: 4, type: 'citizen_resolved', msg: 'Citizen Rohan Sharma verified resolution for Streetlight #t4.', detail: 'Verification counter updated to 4 confirmations', time: '1 hr ago', typeLabel: 'Citizen Verify', color: 'bg-purple-500/15 text-purple-400 border-purple-500/20' },
-  ];
+  const fetchDashboardData = () => {
+    setIsLoading(true);
+    Promise.all([
+      api.get('/admin/analytics/overview'),
+      api.get('/admin/tickets'),
+      api.get('/analytics/wards')
+    ])
+      .then(([overviewRes, ticketsRes, wardsRes]) => {
+        const ov = overviewRes.data.data;
+        const tickList = ticketsRes.data.data.tickets || [];
+        const wardList = wardsRes.data.data || [];
 
-  const wardStats = [
-    { ward: 'Ward 4 - Navrangpura', active: 28, solved: '94%', color: 'w-[94%] bg-green-500', status: 'Stable' },
-    { ward: 'Ward 9 - Kalupur', active: 45, solved: '81%', color: 'w-[81%] bg-green-500', status: 'Stable' },
-    { ward: 'Ward 2 - Satellite', active: 18, solved: '62%', color: 'w-[62%] bg-amber-500', status: 'Warning' },
-    { ward: 'Ward 11 - Paldi', active: 34, solved: '45%', color: 'w-[45%] bg-red-500', status: 'Critical' },
-  ];
+        // 1. Set KPI Cards
+        const topCategory = ov.most_reported_category 
+          ? ov.most_reported_category.charAt(0).toUpperCase() + ov.most_reported_category.slice(1)
+          : 'None';
+        
+        setKpis([
+          { label: 'Total Tickets', value: ov.total_tickets?.toString() || '0', icon: ListChecks, color: 'text-blue-500 border-blue-500/20 shadow-blue-500/5', bg: 'bg-blue-500/10', trend: 'Total logs' },
+          { label: 'Unresolved Count', value: ov.unresolved_count?.toString() || '0', icon: AlertOctagon, color: 'text-red-500 border-red-500/20 shadow-red-500/5', bg: 'bg-red-500/10', trend: 'Awaiting resolution' },
+          { label: 'Avg Resolution Speed', value: ov.avg_resolution_time_days ? `${ov.avg_resolution_time_days.toFixed(1)} Days` : 'N/A', icon: Clock, color: 'text-green-500 border-green-500/20 shadow-green-500/5', bg: 'bg-green-500/10', trend: 'Clearance rate' },
+          { label: 'Top Issue Category', value: topCategory, icon: TrendingUp, color: 'text-amber-500 border-amber-500/20 shadow-amber-500/5', bg: 'bg-amber-500/10', trend: 'Model consensus' },
+          { label: 'Most Affected Area', value: 'Ahmedabad Grid', icon: MapPin, color: 'text-purple-500 border-purple-500/20 shadow-purple-500/5', bg: 'bg-purple-500/10', trend: 'Pilot territory' },
+        ]);
+
+        // 2. Set recent incidents (event logs) from actual tickets
+        const mappedIncidents = tickList.slice(0, 5).map((t, idx) => {
+          const displayCategory = t.category ? t.category.charAt(0).toUpperCase() + t.category.slice(1) : 'Civic Report';
+          
+          let color = 'bg-blue-500/15 text-blue-400 border-blue-500/20';
+          if (t.status === 'resolved') color = 'bg-green-500/15 text-green-400 border-green-500/20';
+          if (t.status === 'in_progress') color = 'bg-yellow-500/15 text-yellow-400 border-yellow-500/20';
+
+          return {
+            id: t.ticket_id || idx,
+            typeLabel: t.status.replace('_', ' '),
+            msg: `${displayCategory} reported near ${t.address || 'Ahmedabad Grid'}`,
+            detail: `Priority severity: ${t.severity.toUpperCase()}. Total matches: ${t.report_count} reports, ${t.upvote_count} upvotes.`,
+            time: 'Active',
+            color: color
+          };
+        });
+        setRecentIncidents(mappedIncidents);
+
+        // 3. Set Ward Performance Table
+        const mappedWards = wardList.map((w) => ({
+          ward: w.name,
+          active: w.activeTickets,
+          solved: w.completed,
+          color: parseFloat(w.completed) >= 95 ? 'w-full bg-green-500' :
+                 parseFloat(w.completed) >= 90 ? 'w-[90%] bg-teal-500' :
+                 parseFloat(w.completed) >= 70 ? 'w-[75%] bg-amber-500' : 'w-[50%] bg-red-500',
+          status: parseFloat(w.completed) >= 90 ? 'Stable' :
+                  parseFloat(w.completed) >= 70 ? 'Warning' : 'Critical'
+        }));
+        setWardStats(mappedWards);
+
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load admin overview dashboard metrics:', err);
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const handleSyncMap = () => {
     setIsSyncing(true);
-    setTimeout(() => setIsSyncing(false), 1500);
+    fetchDashboardData();
+    setTimeout(() => setIsSyncing(false), 1200);
   };
 
   const handleDeduplicate = () => {
     setIsDeduplicating(true);
-    setTimeout(() => setIsDeduplicating(false), 2000);
+    fetchDashboardData();
+    setTimeout(() => setIsDeduplicating(false), 1500);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#0E131F] text-white space-y-4">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+          Connecting Command Center...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 space-y-8 flex-1 overflow-y-auto bg-[#0E131F] text-white">
+    <div className="p-8 space-y-8 flex-1 overflow-y-auto bg-[#0E131F] text-white min-h-screen">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-800/60 pb-6">
@@ -84,7 +151,7 @@ export default function AdminOverview() {
         })}
       </div>
 
-      {/* Main Multi-Column Content Area */}
+      {/* Main Content Area */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         
         {/* LEFT COLUMN: Incidents Feed & Ward performance tables (8 Cols) */}
@@ -103,18 +170,22 @@ export default function AdminOverview() {
             </div>
 
             <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
-              {recentIncidents.map((incident) => (
-                <div key={incident.id} className="flex items-start gap-4 p-3.5 bg-[#151B26]/30 border border-gray-800/40 rounded-card hover:bg-[#151B26]/60 transition-colors duration-200">
-                  <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${incident.color} flex-shrink-0 mt-0.5`}>
-                    {incident.typeLabel}
+              {recentIncidents.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-8">No tickets have been reported yet.</p>
+              ) : (
+                recentIncidents.map((incident) => (
+                  <div key={incident.id} className="flex items-start gap-4 p-3.5 bg-[#151B26]/30 border border-gray-800/40 rounded-card hover:bg-[#151B26]/60 transition-colors duration-200">
+                    <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${incident.color} flex-shrink-0 mt-0.5`}>
+                      {incident.typeLabel}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <p className="text-xs font-bold text-white truncate">{incident.msg}</p>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">{incident.detail}</p>
+                    </div>
+                    <span className="text-[9px] font-mono text-gray-500 whitespace-nowrap">{incident.time}</span>
                   </div>
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    <p className="text-xs font-bold text-white truncate">{incident.msg}</p>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">{incident.detail}</p>
-                  </div>
-                  <span className="text-[9px] font-mono text-gray-500 whitespace-nowrap">{incident.time}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -195,17 +266,17 @@ export default function AdminOverview() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-gray-400">Confidence Threshold</span>
-                  <span className="font-bold font-mono text-gray-300">85.0%</span>
+                  <span className="font-bold font-mono text-gray-300">60.0%</span>
                 </div>
                 <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full w-[85%]" />
+                  <div className="h-full bg-primary rounded-full w-[60%]" />
                 </div>
               </div>
 
               <div className="border-t border-gray-800/80 pt-3.5 grid grid-cols-2 gap-4 text-center">
                 <div className="bg-[#151B26]/30 p-2 border border-gray-800/50 rounded-card">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Auto Merged</p>
-                  <p className="text-base font-black text-white mt-1">142</p>
+                  <p className="text-base font-black text-white mt-1">Realtime</p>
                 </div>
                 <div className="bg-[#151B26]/30 p-2 border border-gray-800/50 rounded-card">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Confidence Guard</p>
