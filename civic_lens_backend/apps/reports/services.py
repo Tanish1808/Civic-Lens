@@ -47,8 +47,38 @@ class ImageStorageService:
                 )
 
         # Dev fallback — in production this branch should never execute.
-        logger.warning("CLOUDINARY_URL not configured or invalid; using stub image URL.")
-        return f"https://stub-storage.local/civic_lens_reports/{uuid.uuid4().hex}.jpg"
+        logger.warning("CLOUDINARY_URL not configured or invalid; using local media storage.")
+        try:
+            import os
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            
+            # Ensure folder exists
+            os.makedirs(os.path.join(settings.MEDIA_ROOT, "civic_lens_reports"), exist_ok=True)
+            
+            # Generate safe unique filename
+            filename = f"civic_lens_reports/{uuid.uuid4().hex}.jpg"
+            
+            # Save file using django storage API
+            file_obj.seek(0)
+            saved_path = default_storage.save(filename, ContentFile(file_obj.read()))
+            
+            # Return relative media URL path
+            return f"/media/{saved_path}"
+        except Exception as e:
+            logger.error("Failed to save media locally: %s. Using base64 SVG fallback.", e)
+            import base64
+            svg_content = (
+                "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'>"
+                "<rect width='100%' height='100%' fill='#1E293B'/>"
+                "<circle cx='150' cy='90' r='25' fill='#38BDF8' opacity='0.2'/>"
+                "<path d='M150 75 L162 105 L138 105 Z' fill='#38BDF8'/>"
+                "<text x='50%' y='145' font-family='sans-serif' font-size='11' font-weight='bold' fill='#38BDF8' text-anchor='middle'>CITIZEN UPLOAD</text>"
+                "<text x='50%' y='165' font-family='sans-serif' font-size='9' font-weight='bold' fill='#64748B' text-anchor='middle'>[Local Offline Sandbox]</text>"
+                "</svg>"
+            )
+            encoded = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
+            return f"data:image/svg+xml;base64,{encoded}"
 
 
 class MLClient:

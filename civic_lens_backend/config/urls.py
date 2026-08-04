@@ -4,6 +4,8 @@ Base path: /api/v1/ (per API Design Document Section 1 - URL path versioning).
 """
 from django.http import JsonResponse
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 def health_check(request):
@@ -19,4 +21,5 @@ urlpatterns = [
     path("api/v1/", include("apps.analytics.urls")),
     path("api/v1/", include("apps.notifications.urls")),
     path("api/v1/", include("apps.audit.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

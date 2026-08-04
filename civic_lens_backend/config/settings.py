@@ -162,6 +162,8 @@ MAX_REPORT_IMAGE_SIZE_BYTES = 8 * 1024 * 1024  # 8MB, per FR-8 / API Design Sect
 # Static files
 # ---------------------------------------------------------------------------
 STATIC_URL = "static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------------------------------------------------------
