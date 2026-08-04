@@ -41,7 +41,8 @@ export default function Signup() {
       .catch((error) => {
         setIsLoading(false);
         if (error.response && error.response.data) {
-          setSignupError(error.response.data.message || 'Registration failed. Please check inputs.');
+          const apiError = error.response.data.error?.message || error.response.data.message;
+          setSignupError(apiError || 'Registration failed. Please check inputs.');
         } else {
           setSignupError('Unable to connect to the server. Please check your connection.');
         }

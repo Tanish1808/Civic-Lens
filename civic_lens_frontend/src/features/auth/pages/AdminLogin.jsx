@@ -46,7 +46,8 @@ export default function AdminLogin() {
       .catch((error) => {
         setIsLoading(false);
         if (error.response && error.response.data) {
-          setAuthError(error.response.data.message || 'Invalid administrator credentials.');
+          const apiError = error.response.data.error?.message || error.response.data.message;
+          setAuthError(apiError || 'Invalid administrator credentials.');
         } else {
           setAuthError('Unable to connect to the server. Please check your connection.');
         }

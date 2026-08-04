@@ -108,7 +108,8 @@ export default function Login() {
         setIsLoading(false);
         triggerErrorShake();
         if (error.response && error.response.data) {
-          setAuthError(error.response.data.message || 'Invalid email address or password.');
+          const apiError = error.response.data.error?.message || error.response.data.message;
+          setAuthError(apiError || 'Invalid email address or password.');
         } else {
           setAuthError('Unable to connect to the server. Please check your connection.');
         }

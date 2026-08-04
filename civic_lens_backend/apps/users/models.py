@@ -17,14 +17,14 @@ ROLE_CHOICES = ("citizen", "moderator", "admin", "super_admin")
 
 class User(Document):
     email = StringField(required=True, unique=True)
-    phone = StringField(unique=True, sparse=True, null=True)
+    phone = StringField(unique=True, sparse=True)
     password_hash = StringField(required=True)
     full_name = StringField(null=True)
     role = StringField(choices=ROLE_CHOICES, default="citizen")
     civic_score = IntField(default=0, min_value=0)
     mfa_enabled = BooleanField(default=False)
     is_active = BooleanField(default=True)
-    google_oauth_id = StringField(unique=True, sparse=True, null=True)
+    google_oauth_id = StringField(unique=True, sparse=True)
     created_at = DateTimeField(default=datetime.datetime.utcnow)
     updated_at = DateTimeField(default=datetime.datetime.utcnow)
 
