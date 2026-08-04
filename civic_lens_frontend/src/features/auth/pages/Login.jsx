@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Camera, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -77,17 +78,15 @@ export default function Login() {
     setIsLoading(true);
     setAuthError('');
 
-    // Simulate auth latency
-    setTimeout(() => {
-      setIsLoading(false);
+    api.post('/auth/login', { email, password })
+      .then((response) => {
+        setIsLoading(false);
+        const { access_token, role } = response.data.data;
 
-      if (email === 'error@civiclens.gov') {
-        setAuthError('Invalid email address or password. Please verify your credentials.');
-        triggerErrorShake();
-      } else {
+        sessionStorage.setItem('token', access_token);
         sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('userRole', 'citizen');
-        
+        sessionStorage.setItem('userRole', role);
+
         // Extract capitalized email prefix as userName
         const namePart = email.split('@')[0];
         const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
@@ -95,8 +94,16 @@ export default function Login() {
 
         window.dispatchEvent(new Event('auth-change'));
         navigate(from, { replace: true });
-      }
-    }, 1500);
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        triggerErrorShake();
+        if (error.response && error.response.data) {
+          setAuthError(error.response.data.message || 'Invalid email address or password.');
+        } else {
+          setAuthError('Unable to connect to the server. Please check your connection.');
+        }
+      });
   };
 
   // Dynamic background orb classes based on form validation state
