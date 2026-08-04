@@ -1,57 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Award, ShieldCheck, Trophy, Sparkles, MapPin, Star, Zap, Clock, Loader2 } from 'lucide-react';
+import { Award, ShieldCheck, Trophy, Sparkles, MapPin, Star, Zap, Clock, Loader2, User as UserIcon } from 'lucide-react';
 import api from '../../../services/api';
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState('citizens'); // 'citizens' | 'wards'
   const [citizenContributors, setCitizenContributors] = useState([]);
+  const [wardPerformance, setWardPerformance] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Top performing city wards list (Zone Analytics details)
-  const wardPerformance = [
-    { rank: 1, name: 'West Zone (Navrangpura)', avgTime: '2.4 Days', completed: '97.2%', score: 4.9, activeTickets: 18 },
-    { rank: 2, name: 'North West (Bodakdev)', avgTime: '3.1 Days', completed: '94.8%', score: 4.7, activeTickets: 24 },
-    { rank: 3, name: 'South Zone (Maninagar)', avgTime: '3.8 Days', completed: '91.5%', score: 4.5, activeTickets: 31 },
-    { rank: 4, name: 'East Zone (Nikol)', avgTime: '4.5 Days', completed: '89.0%', score: 4.2, activeTickets: 42 },
-    { rank: 5, name: 'Central Zone (Kalupur)', avgTime: '5.2 Days', completed: '86.4%', score: 4.0, activeTickets: 58 },
-  ];
-
   useEffect(() => {
+    setIsLoading(true);
     if (activeTab === 'citizens') {
-      setIsLoading(true);
       api.get('/users/leaderboard')
         .then((response) => {
-          const fetchedUsers = response.data.data.map((u) => ({
-            rank: u.rank,
-            name: u.name,
-            points: u.points,
-            reports: u.reports,
-            verifications: u.verifications,
-            badge: u.badge,
-            color: u.rank === 1 ? 'border-yellow-400 bg-yellow-500/10' :
-                   u.rank === 2 ? 'border-slate-300 bg-slate-500/10' :
-                   u.rank === 3 ? 'border-amber-600 bg-amber-600/10' : ''
-          }));
-
-          // Defensive design: If database has fewer than 3 users, pad with mock champions so podium layout doesn't crash
-          const mockFallbacks = [
-            { rank: 1, name: 'Aarav Mehta', points: 120, reports: 5, verifications: 12, badge: 'Civic Sentinel', color: 'border-yellow-400 bg-yellow-500/10' },
-            { rank: 2, name: 'Priya Sharma', points: 80, reports: 3, verifications: 8, badge: 'Ward Advocate', color: 'border-slate-300 bg-slate-500/10' },
-            { rank: 3, name: 'Rohan Joshi', points: 40, reports: 2, verifications: 4, badge: 'Community Hero', color: 'border-amber-600 bg-amber-600/10' }
-          ];
-
-          const finalUsers = [...fetchedUsers];
-          for (let i = finalUsers.length; i < 3; i++) {
-            finalUsers.push({
-              ...mockFallbacks[i],
-              rank: i + 1
-            });
-          }
-          setCitizenContributors(finalUsers);
+          setCitizenContributors(response.data.data || []);
           setIsLoading(false);
         })
         .catch((err) => {
           console.error("Error fetching leaderboard:", err);
+          setIsLoading(false);
+        });
+    } else {
+      api.get('/analytics/wards')
+        .then((response) => {
+          setWardPerformance(response.data.data || []);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching ward performance:", err);
           setIsLoading(false);
         });
     }
@@ -103,11 +79,29 @@ export default function Leaderboard() {
         </div>
       </div>
 
-      {activeTab === 'citizens' ? (
-        isLoading ? (
-          <div className="flex flex-col justify-center items-center py-12 space-y-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider animate-pulse">Calculating karma points...</p>
+      {isLoading ? (
+        <div className="flex flex-col justify-center items-center py-16 space-y-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">
+            Syncing municipal data...
+          </p>
+        </div>
+      ) : activeTab === 'citizens' ? (
+        citizenContributors.length === 0 ? (
+          <div className="bg-white rounded-card p-12 border border-gray-150 text-center space-y-4 shadow-sm max-w-lg mx-auto">
+            <Trophy className="w-12 h-12 text-gray-350 mx-auto animate-bounce" />
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-text-primary">No Contributors Recorded</h3>
+              <p className="text-xs text-text-secondary max-w-sm mx-auto">
+                No civic contributions have been registered yet. Be the first to report active local issues to earn points and claim Rank #1!
+              </p>
+            </div>
+            <Link
+              to="/report"
+              className="inline-flex px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-button hover:bg-primary/95 shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] cursor-pointer"
+            >
+              <span>Submit First Report</span>
+            </Link>
           </div>
         ) : (
           <div className="space-y-12">
@@ -115,69 +109,117 @@ export default function Leaderboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end max-w-4xl mx-auto">
               
               {/* Rank 2 (Left) */}
-              <div className="bg-white rounded-card p-6 border border-gray-100 shadow-lg shadow-gray-200/20 text-center relative order-2 md:order-1 hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-4 left-4 w-7 h-7 bg-slate-100 border border-slate-300 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs">
-                  2
-                </div>
-                <div className="w-16 h-16 rounded-full bg-slate-500/10 border-2 border-slate-300 flex items-center justify-center mx-auto mb-4 relative">
-                  <span className="font-extrabold text-slate-700 text-lg">
-                    {topThree[1]?.name ? topThree[1].name.charAt(0) : 'P'}
-                  </span>
-                  <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white p-1 rounded-full border border-white">
-                    <Award className="w-3.5 h-3.5" />
+              {topThree[1] ? (
+                <div className="bg-white rounded-card p-6 border border-gray-100 shadow-lg shadow-gray-200/20 text-center relative order-2 md:order-1 hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-4 left-4 w-7 h-7 bg-slate-100 border border-slate-300 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs">
+                    2
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-slate-500/10 border-2 border-slate-300 flex items-center justify-center mx-auto mb-4 relative">
+                    <span className="font-extrabold text-slate-700 text-lg">
+                      {topThree[1].name.charAt(0)}
+                    </span>
+                    <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white p-1 rounded-full border border-white">
+                      <Award className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-text-primary text-base truncate">{topThree[1].name}</h3>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{topThree[1].badge}</p>
+                  <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-slate-700 text-xs font-extrabold font-mono">
+                    {topThree[1].points} pts
                   </div>
                 </div>
-                <h3 className="font-bold text-text-primary text-base truncate">{topThree[1]?.name}</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{topThree[1]?.badge}</p>
-                <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-slate-700 text-xs font-extrabold font-mono">
-                  {topThree[1]?.points} pts
+              ) : (
+                <div className="bg-gray-50/50 rounded-card p-6 border border-dashed border-gray-200 text-center relative order-2 md:order-1 select-none opacity-60">
+                  <div className="absolute top-4 left-4 w-7 h-7 bg-gray-100 border border-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs font-mono">
+                    2
+                  </div>
+                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mx-auto mb-4 bg-white">
+                    <UserIcon className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <h3 className="font-bold text-gray-400 text-sm">Vacant Spot</h3>
+                  <p className="text-[9px] text-gray-400 font-semibold tracking-wider mt-1">Awaiting Advocate</p>
+                  <div className="mt-4 inline-flex items-center px-3 py-1 bg-white border border-gray-150 rounded-full text-gray-400 text-xs font-bold font-mono">
+                    0 pts
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Rank 1 (Center) */}
-              <div className="bg-white rounded-card p-8 border-2 border-yellow-400/70 shadow-2xl shadow-yellow-500/5 text-center relative order-1 md:order-2 hover:scale-[1.03] transition-all duration-300 md:-translate-y-4">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-text-primary px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-md">
-                  <Trophy className="w-3.5 h-3.5 text-text-primary" />
-                  <span>Champion</span>
-                </div>
-                <div className="w-20 h-20 rounded-full bg-yellow-500/10 border-2 border-yellow-400 flex items-center justify-center mx-auto mb-4 relative">
-                  <span className="font-extrabold text-yellow-600 text-2xl">
-                    {topThree[0]?.name ? topThree[0].name.charAt(0) : 'A'}
-                  </span>
-                  <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-text-primary p-1.5 rounded-full border-2 border-white shadow-md">
-                    <Sparkles className="w-4 h-4" />
+              {topThree[0] ? (
+                <div className="bg-white rounded-card p-8 border-2 border-yellow-400/70 shadow-2xl shadow-yellow-500/5 text-center relative order-1 md:order-2 hover:scale-[1.03] transition-all duration-300 md:-translate-y-4">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-text-primary px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-md">
+                    <Trophy className="w-3.5 h-3.5 text-text-primary" />
+                    <span>Champion</span>
+                  </div>
+                  <div className="w-20 h-20 rounded-full bg-yellow-500/10 border-2 border-yellow-400 flex items-center justify-center mx-auto mb-4 relative">
+                    <span className="font-extrabold text-yellow-600 text-2xl">
+                      {topThree[0].name.charAt(0)}
+                    </span>
+                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-text-primary p-1.5 rounded-full border-2 border-white shadow-md">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <h3 className="font-black text-text-primary text-lg truncate">{topThree[0].name}</h3>
+                  <p className="text-xs text-yellow-600 font-extrabold uppercase tracking-wider mt-1">{topThree[0].badge}</p>
+                  <div className="mt-4 inline-flex items-center gap-1 px-4 py-1.5 bg-yellow-50 border border-yellow-100 rounded-full text-yellow-700 text-sm font-black font-mono shadow-inner">
+                    {topThree[0].points} pts
                   </div>
                 </div>
-                <h3 className="font-black text-text-primary text-lg truncate">{topThree[0]?.name}</h3>
-                <p className="text-xs text-yellow-600 font-extrabold uppercase tracking-wider mt-1">{topThree[0]?.badge}</p>
-                <div className="mt-4 inline-flex items-center gap-1 px-4 py-1.5 bg-yellow-50 border border-yellow-100 rounded-full text-yellow-700 text-sm font-black font-mono shadow-inner">
-                  {topThree[0]?.points} pts
+              ) : (
+                <div className="bg-gray-50/50 rounded-card p-8 border-2 border-dashed border-gray-200 text-center relative order-1 md:order-2 select-none opacity-60 md:-translate-y-4 bg-white">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-500 px-3.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                    Vacant
+                  </div>
+                  <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mx-auto mb-4 bg-white">
+                    <Trophy className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <h3 className="font-black text-gray-400 text-base">Vacant Spot</h3>
+                  <p className="text-xs text-gray-400 font-semibold tracking-wider mt-1">Awaiting Sentinel</p>
+                  <div className="mt-4 inline-flex items-center px-4 py-1.5 bg-white border border-gray-150 rounded-full text-gray-400 text-sm font-bold font-mono">
+                    0 pts
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Rank 3 (Right) */}
-              <div className="bg-white rounded-card p-6 border border-gray-100 shadow-lg shadow-gray-200/20 text-center relative order-3 hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-4 left-4 w-7 h-7 bg-amber-50/50 border border-amber-600/35 text-amber-700 rounded-full flex items-center justify-center font-bold text-xs">
-                  3
-                </div>
-                <div className="w-16 h-16 rounded-full bg-amber-600/10 border-2 border-amber-600/50 flex items-center justify-center mx-auto mb-4 relative">
-                  <span className="font-extrabold text-amber-700 text-lg">
-                    {topThree[2]?.name ? topThree[2].name.charAt(0) : 'R'}
-                  </span>
-                  <div className="absolute -bottom-1 -right-1 bg-amber-600 text-white p-1 rounded-full border border-white">
-                    <Zap className="w-3.5 h-3.5" />
+              {topThree[2] ? (
+                <div className="bg-white rounded-card p-6 border border-gray-100 shadow-lg shadow-gray-200/20 text-center relative order-3 hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-4 left-4 w-7 h-7 bg-amber-50/50 border border-amber-600/35 text-amber-700 rounded-full flex items-center justify-center font-bold text-xs">
+                    3
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-amber-600/10 border-2 border-amber-600/50 flex items-center justify-center mx-auto mb-4 relative">
+                    <span className="font-extrabold text-amber-700 text-lg">
+                      {topThree[2].name.charAt(0)}
+                    </span>
+                    <div className="absolute -bottom-1 -right-1 bg-amber-600 text-white p-1 rounded-full border border-white">
+                      <Zap className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-text-primary text-base truncate">{topThree[2].name}</h3>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{topThree[2].badge}</p>
+                  <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-amber-50/50 border border-amber-100/50 rounded-full text-amber-700 text-xs font-extrabold font-mono">
+                    {topThree[2].points} pts
                   </div>
                 </div>
-                <h3 className="font-bold text-text-primary text-base truncate">{topThree[2]?.name}</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{topThree[2]?.badge}</p>
-                <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 bg-amber-50/50 border border-amber-100/50 rounded-full text-amber-700 text-xs font-extrabold font-mono">
-                  {topThree[2]?.points} pts
+              ) : (
+                <div className="bg-gray-50/50 rounded-card p-6 border border-dashed border-gray-200 text-center relative order-3 select-none opacity-60">
+                  <div className="absolute top-4 left-4 w-7 h-7 bg-gray-100 border border-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs font-mono">
+                    3
+                  </div>
+                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mx-auto mb-4 bg-white">
+                    <UserIcon className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <h3 className="font-bold text-gray-400 text-sm">Vacant Spot</h3>
+                  <p className="text-[9px] text-gray-400 font-semibold tracking-wider mt-1">Awaiting Hero</p>
+                  <div className="mt-4 inline-flex items-center px-3 py-1 bg-white border border-gray-150 rounded-full text-gray-400 text-xs font-bold font-mono">
+                    0 pts
+                  </div>
                 </div>
-              </div>
+              )}
 
             </div>
 
-            {/* List for Rank 4 and below */}
+            {/* List for Rank 4 to 10 */}
             {remainingCitizens.length > 0 && (
               <div className="bg-white border border-gray-200/80 rounded-card shadow-xl shadow-gray-200/20 overflow-hidden max-w-4xl mx-auto">
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-200/80 grid grid-cols-12 text-xs font-extrabold text-text-secondary uppercase tracking-wider">
