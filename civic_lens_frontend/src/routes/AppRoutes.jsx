@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import AdminSidebar from '../components/Navigation/AdminSidebar';
 import AdminLogin from '../features/auth/pages/AdminLogin';
@@ -11,10 +11,26 @@ import AdminRequests from '../features/admin/pages/AdminRequests';
 
 // Layout for Admin views
 function AdminLayout() {
-  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-  const role = sessionStorage.getItem('userRole');
+  const [authState, setAuthState] = useState({
+    isLoggedIn: sessionStorage.getItem('isLoggedIn') === 'true',
+    role: sessionStorage.getItem('userRole')
+  });
 
-  if (!isLoggedIn || role !== 'admin') {
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setAuthState({
+        isLoggedIn: sessionStorage.getItem('isLoggedIn') === 'true',
+        role: sessionStorage.getItem('userRole')
+      });
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
+  }, []);
+
+  if (!authState.isLoggedIn || authState.role !== 'admin') {
     return <Navigate to="/admin/login" replace />;
   }
 
