@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -15,18 +16,32 @@ export default function AdminLogin() {
     setIsLoading(true);
     setAuthError('');
 
-    // Simulate municipal credential lookup (1.2s delay)
-    setTimeout(() => {
-      setIsLoading(false);
-      if (email === 'admin@civiclens.gov' && password === 'admin123') {
+    api.post('/auth/login', { email, password })
+      .then((response) => {
+        setIsLoading(false);
+        const { access_token, role } = response.data.data;
+
+        if (role !== 'admin') {
+          setAuthError('Access Denied. You do not have administrator permissions.');
+          return;
+        }
+
+        sessionStorage.setItem('token', access_token);
         sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('userRole', 'admin');
+        sessionStorage.setItem('userRole', role);
+        sessionStorage.setItem('userName', 'Admin Staff');
+
         window.dispatchEvent(new Event('auth-change'));
         navigate('/admin/overview');
-      } else {
-        setAuthError('Invalid administrator credentials. Access Denied.');
-      }
-    }, 1200);
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        if (error.response && error.response.data) {
+          setAuthError(error.response.data.message || 'Invalid administrator credentials.');
+        } else {
+          setAuthError('Unable to connect to the server. Please check your connection.');
+        }
+      });
   };
 
   return (

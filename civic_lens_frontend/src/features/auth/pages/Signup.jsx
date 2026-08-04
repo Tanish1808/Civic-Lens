@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Camera, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
+import { Camera, User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [signupError, setSignupError] = useState('');
 
   const handleSignup = (e) => {
     e.preventDefault();
@@ -20,14 +23,29 @@ export default function Signup() {
       return;
     }
     setConfirmPasswordError('');
+    setIsLoading(true);
+    setSignupError('');
 
-    // Save logged in state automatically
-    sessionStorage.setItem('isLoggedIn', 'true');
-    sessionStorage.setItem('userRole', 'citizen');
-    sessionStorage.setItem('userName', fullName || 'Citizen User');
-    window.dispatchEvent(new Event('auth-change'));
-
-    navigate('/dashboard');
+    api.post('/auth/signup', {
+      email,
+      password,
+      phone: phone || null,
+      full_name: fullName,
+    })
+      .then((response) => {
+        setIsLoading(false);
+        navigate('/login', {
+          state: { message: 'Registration successful! Please sign in with your credentials.' },
+        });
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        if (error.response && error.response.data) {
+          setSignupError(error.response.data.message || 'Registration failed. Please check inputs.');
+        } else {
+          setSignupError('Unable to connect to the server. Please check your connection.');
+        }
+      });
   };
 
   return (
@@ -59,7 +77,15 @@ export default function Signup() {
         </div>
 
         {/* Glassmorphism Card */}
-        <div className="bg-white/80 backdrop-blur-lg py-8 px-6 shadow-2xl shadow-gray-200/50 rounded-card border border-white/50 sm:px-10">
+        <div className="bg-white/80 backdrop-blur-lg py-8 px-6 shadow-2xl shadow-gray-200/50 rounded-card border border-white/50 sm:px-10 space-y-4.5">
+          
+          {signupError && (
+            <div className="flex items-start gap-2.5 p-3.5 bg-red-50 text-red-950 border border-red-200 rounded-card text-xs leading-relaxed animate-in fade-in duration-200">
+              <AlertCircle className="w-4.5 h-4.5 flex-shrink-0 text-red-500 mt-0.5" />
+              <p className="font-semibold">{signupError}</p>
+            </div>
+          )}
+
           <form className="space-y-4.5" onSubmit={handleSignup}>
             
             {/* Full Name */}
@@ -228,9 +254,17 @@ export default function Signup() {
             <div className="mt-5">
               <button
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-button shadow-md text-sm font-bold text-white bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-98"
+                disabled={isLoading}
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-button shadow-md text-sm font-bold text-white bg-primary hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-98 disabled:bg-gray-400 disabled:shadow-none disabled:cursor-not-allowed"
               >
-                Create Account
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <span>Create Account</span>
+                )}
               </button>
             </div>
 
