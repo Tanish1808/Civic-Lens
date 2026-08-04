@@ -86,7 +86,7 @@ class LoginView(APIView):
         if not user or not user.check_password(data["password"]):
             return error("INVALID_CREDENTIALS", "Invalid email or password.", status=401)
 
-        return _issue_tokens(user, {"role": user.role})
+        return _issue_tokens(user, {"role": user.role, "full_name": user.full_name})
 
 
 class RefreshView(APIView):
