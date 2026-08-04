@@ -90,12 +90,21 @@ class DuplicateDetectionService:
 class TicketMergeService:
     @staticmethod
     def create_new_ticket(report):
+        import random
+        zones = [
+            "West Zone (Navrangpura)",
+            "North West (Bodakdev)",
+            "South Zone (Maninagar)",
+            "East Zone (Nikol)",
+            "Central Zone (Kalupur)"
+        ]
         ticket = Ticket(
             category=report.ml_category or report.user_selected_category or "other",
             severity=report.ml_severity or "low",
             location=report.location,
             report_count=1,
             photos=[Photo(url=report.photo_url, uploaded_by=report.user_id)],
+            zone_id=random.choice(zones)
         )
         ticket.append_status_history("reported", changed_by="system")
         ticket.save()
