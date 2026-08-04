@@ -8,4 +8,5 @@ urlpatterns = [
     path("admin/analytics/severity-distribution", views.SeverityDistributionView.as_view()),
     path("admin/analytics/resolution-trend", views.ResolutionTrendView.as_view()),
     path("admin/analytics/area-density", views.AreaDensityView.as_view()),
+    path("analytics/wards", views.PublicWardAnalyticsView.as_view()),
 ]
