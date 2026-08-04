@@ -28,14 +28,26 @@ class ImageStorageService:
 
     @staticmethod
     def upload(file_obj):
-        if settings.CLOUDINARY_URL:
-            import cloudinary.uploader
+        cloudinary_url = getattr(settings, "CLOUDINARY_URL", "")
+        is_configured = (
+            cloudinary_url
+            and "key:secret@cloud_name" not in cloudinary_url
+            and "changeme" not in cloudinary_url
+        )
 
-            result = cloudinary.uploader.upload(file_obj, folder="civic_lens_reports")
-            return result["secure_url"]
+        if is_configured:
+            try:
+                import cloudinary.uploader
+
+                result = cloudinary.uploader.upload(file_obj, folder="civic_lens_reports")
+                return result["secure_url"]
+            except Exception as exc:
+                logger.error(
+                    "Cloudinary upload failed: %s. Falling back to local stub storage.", exc
+                )
 
         # Dev fallback — in production this branch should never execute.
-        logger.warning("CLOUDINARY_URL not configured; using stub image URL.")
+        logger.warning("CLOUDINARY_URL not configured or invalid; using stub image URL.")
         return f"https://stub-storage.local/civic_lens_reports/{uuid.uuid4().hex}.jpg"
 
 
