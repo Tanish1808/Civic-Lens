@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Filter, Search, RotateCcw, AlertCircle, MapPin, Eye, ThumbsUp, Calendar } from 'lucide-react';
+import { Filter, Search, RotateCcw, AlertCircle, MapPin, Eye, ThumbsUp, Calendar, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 const CATEGORY_IMAGES = {
   Pothole: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=400&q=80',
@@ -44,135 +45,65 @@ const createSeverityMarker = (severity) => {
 export default function MapDashboard() {
   const [showFilters, setShowFilters] = useState(true);
   const [selectedSeverity, setSelectedSeverity] = useState({ low: true, medium: true, high: true });
+  const [tickets, setTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Pilot Center: Ahmedabad coordinates from documents
   const centerPosition = [23.0225, 72.5714];
 
-  // Mock tickets data matching Document 4 & 5
-  const mockTickets = [
-    {
-      id: 't1',
-      category: 'Pothole',
-      severity: 'high',
-      location: [23.0227, 72.5716],
-      address: 'MG Road, near Bus Stop',
-      reports: 12,
-      votes: 8,
-      status: 'verified',
-    },
-    {
-      id: 't2',
-      category: 'Garbage',
-      severity: 'medium',
-      location: '23.0210, 72.5700'.split(',').map(Number),
-      address: 'Sector 2 Market Square',
-      reports: 4,
-      votes: 2,
-      status: 'acknowledged',
-    },
-    {
-      id: 't3',
-      category: 'Waterlogging',
-      severity: 'high',
-      location: [23.0250, 72.5730],
-      address: 'Subhash Marg Subway',
-      reports: 28,
-      votes: 15,
-      status: 'in_progress',
-    },
-    {
-      id: 't4',
-      category: 'Streetlight',
-      severity: 'low',
-      location: [23.0200, 72.5740],
-      address: 'Lane 5, Park Avenue',
-      reports: 1,
-      votes: 0,
-      status: 'reported',
-    },
-    {
-      id: 't5',
-      category: 'Garbage',
-      severity: 'low',
-      location: [23.0300, 72.5650],
-      address: 'CG Road, Opp. Mall',
-      reports: 2,
-      votes: 1,
-      status: 'reported',
-    },
-    {
-      id: 't6',
-      category: 'Waterlogging',
-      severity: 'high',
-      location: [23.0150, 72.5800],
-      address: 'Maninagar Railway Underpass',
-      reports: 34,
-      votes: 20,
-      status: 'in_progress',
-    },
-    {
-      id: 't7',
-      category: 'Pothole',
-      severity: 'medium',
-      location: [23.0280, 72.5920],
-      address: 'Kalupur Circle near Train Station',
-      reports: 9,
-      votes: 5,
-      status: 'verified',
-    },
-    {
-      id: 't8',
-      category: 'Streetlight',
-      severity: 'medium',
-      location: [23.0350, 72.5820],
-      address: 'Ashram Road Junction',
-      reports: 5,
-      votes: 3,
-      status: 'acknowledged',
-    },
-    {
-      id: 't9',
-      category: 'Pothole',
-      severity: 'low',
-      location: [23.0120, 72.5620],
-      address: 'Paldi Crossing Lane 2',
-      reports: 3,
-      votes: 0,
-      status: 'reported',
-    },
-    {
-      id: 't10',
-      category: 'Garbage',
-      severity: 'high',
-      location: [23.0420, 72.5510],
-      address: 'RTO Circle Flyover Underneath',
-      reports: 18,
-      votes: 11,
-      status: 'in_progress',
-    },
-    {
-      id: 't11',
-      category: 'Waterlogging',
-      severity: 'medium',
-      location: [23.0295, 72.5480],
-      address: 'Drive-in Road near Cineplex',
-      reports: 12,
-      votes: 7,
-      status: 'verified',
-    },
-    {
-      id: 't12',
-      category: 'Streetlight',
-      severity: 'low',
-      location: [23.0080, 72.5720],
-      address: 'Vasna Barrage Road Path',
-      reports: 2,
-      votes: 1,
-      status: 'reported',
-    }
-  ];
+  useEffect(() => {
+    api.get('/tickets')
+      .then((response) => {
+        const backendTickets = response.data.data.tickets.map((t) => {
+          // Standardize GeoJSON Point [lng, lat] coordinates to Leaflet [lat, lng] format
+          const lat = t.location?.coordinates?.[1] ?? centerPosition[0];
+          const lng = t.location?.coordinates?.[0] ?? centerPosition[1];
+          
+          // Capitalize first letter of category name
+          const displayCategory = t.category.charAt(0).toUpperCase() + t.category.slice(1);
 
-  const filteredTickets = mockTickets.filter(t => selectedSeverity[t.severity]);
+          return {
+            id: t.ticket_id,
+            category: displayCategory,
+            severity: t.severity,
+            location: [lat, lng],
+            address: t.address || `${displayCategory} reported near ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`,
+            reports: t.report_count,
+            votes: t.upvote_count,
+            status: t.status,
+          };
+        });
+        setTickets(backendTickets);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching tickets:', err);
+        setError('Failed to load tickets from server.');
+        setIsLoading(false);
+      });
+  }, []);
+
+  const filteredTickets = tickets.filter(t => selectedSeverity[t.severity]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Syncing Ahmedabad Grid...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-3 p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500" />
+        <h3 className="text-base font-extrabold text-text-primary">Connection Offline</h3>
+        <p className="text-xs text-text-secondary max-w-sm leading-relaxed">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex h-[calc(100vh-64px)] w-full overflow-hidden bg-bg-light">

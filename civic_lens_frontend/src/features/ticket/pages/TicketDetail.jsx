@@ -1,26 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, LogIn, X, ShieldAlert } from 'lucide-react';
+import { 
+  ThumbsUp, MapPin, Clock, Calendar, CheckCircle2, User, 
+  ChevronLeft, ChevronRight, MessageSquare, AlertCircle, LogIn, X, ShieldAlert, Loader2 
+} from 'lucide-react';
+import api from '../../../services/api';
 
 export default function TicketDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-  
-  // Upvote states
-  const [upvotes, setUpvotes] = useState(12);
+
+  // API loading states
+  const [ticket, setTicket] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Upvote / Resolution states
+  const [upvotes, setUpvotes] = useState(0);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [modalReason, setModalReason] = useState('upvote'); // 'upvote' | 'resolve'
   const [hasVerifiedResolved, setHasVerifiedResolved] = useState(false);
-  const [verificationsCount, setVerificationsCount] = useState(3);
+  const [verificationsCount, setVerificationsCount] = useState(0);
 
-  // Carousel Mock photos
-  const photos = [
-    { url: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=800&q=80', uploadedBy: 'Rohan Sharma', date: 'Jul 20, 2026' },
-    { url: 'https://images.unsplash.com/photo-1599740831146-80a8352307a8?auto=format&fit=crop&w=800&q=80', uploadedBy: 'Priya Patel', date: 'Jul 21, 2026' }
-  ];
+  // Photos Carousel state
+  const [ticketPhotos, setTicketPhotos] = useState([]);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+
+  // Comments state
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Fetch Ticket details & Comments simultaneously
+    const fetchTicket = api.get(`/tickets/${id}`);
+    const fetchComments = api.get(`/tickets/${id}/comments`);
+
+    Promise.all([fetchTicket, fetchComments])
+      .then(([ticketRes, commentsRes]) => {
+        const t = ticketRes.data.data;
+        setTicket(t);
+        setUpvotes(t.upvote_count);
+        setVerificationsCount(t.resolved_signal_count);
+
+        // Fallback photos list if backend array is empty
+        const defaultPhotos = [
+          { url: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=800&q=80', uploaded_by: 'Public Upload', uploaded_at: t.created_at },
+          { url: 'https://images.unsplash.com/photo-1599740831146-80a8352307a8?auto=format&fit=crop&w=800&q=80', uploaded_by: 'System Audit', uploaded_at: t.created_at }
+        ];
+        setTicketPhotos(t.photos && t.photos.length > 0 ? t.photos : defaultPhotos);
+        setComments(commentsRes.data.data.comments || []);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading ticket details:', err);
+        setError('Failed to retrieve ticket info from server. Please try again.');
+        setIsLoading(false);
+      });
+  }, [id]);
 
   const handleUpvote = () => {
     if (!isLoggedIn) {
@@ -28,22 +69,130 @@ export default function TicketDetail() {
       setShowAuthModal(true);
       return;
     }
+
     if (hasUpvoted) {
-      setUpvotes(prev => prev - 1);
-      setHasUpvoted(false);
+      // Remove Upvote
+      api.delete(`/tickets/${id}/upvote`)
+        .then(() => {
+          setUpvotes(prev => prev - 1);
+          setHasUpvoted(false);
+        })
+        .catch((err) => console.error('Error removing upvote:', err));
     } else {
-      setUpvotes(prev => prev + 1);
-      setHasUpvoted(true);
+      // Add Upvote
+      api.post(`/tickets/${id}/upvote`)
+        .then((response) => {
+          setUpvotes(response.data.data.upvote_count);
+          setHasUpvoted(true);
+        })
+        .catch((err) => {
+          if (err.response && err.response.status === 409) {
+            setHasUpvoted(true); // User had already upvoted
+          }
+          console.error('Error registering upvote:', err);
+        });
     }
   };
 
+  const handleVerifyResolved = () => {
+    if (!isLoggedIn) {
+      setModalReason('resolve');
+      setShowAuthModal(true);
+      return;
+    }
+    if (hasVerifiedResolved) return; // Locked state upon validation
+
+    api.post(`/tickets/${id}/mark-resolved`)
+      .then((response) => {
+        setHasVerifiedResolved(true);
+        setVerificationsCount(response.data.data.resolved_signal_count);
+      })
+      .catch((err) => {
+        console.error('Error marking resolution:', err);
+      });
+  };
+
+  const handlePostComment = (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    setIsSubmittingComment(true);
+    api.post(`/tickets/${id}/comments`, { text: newComment })
+      .then((response) => {
+        setComments(prev => [response.data.data, ...prev]);
+        setNewComment('');
+        setIsSubmittingComment(false);
+      })
+      .catch((err) => {
+        console.error('Error posting comment:', err);
+        setIsSubmittingComment(false);
+      });
+  };
+
+  // Helper dynamic mappings for vertical stepper timeline
+  const getStepStatus = (stepName) => {
+    const statuses = ['reported', 'verified', 'acknowledged', 'in_progress', 'resolved'];
+    const currentIdx = statuses.indexOf(ticket?.status || 'reported');
+    const stepIdx = statuses.indexOf(stepName.toLowerCase().replace(' ', '_'));
+    if (stepIdx < currentIdx) return 'completed';
+    if (stepIdx === currentIdx) return 'current';
+    return 'upcoming';
+  };
+
+  const getStepDate = (stepName) => {
+    const stepSlug = stepName.toLowerCase().replace(' ', '_');
+    const entry = ticket?.status_history?.find(h => h.status === stepSlug);
+    if (!entry) return '';
+    return new Date(entry.changed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getStepDesc = (stepName) => {
+    const stepSlug = stepName.toLowerCase().replace(' ', '_');
+    const entry = ticket?.status_history?.find(h => h.status === stepSlug);
+    if (entry) return entry.note || `Status changed to ${stepName}.`;
+    
+    if (stepSlug === 'reported') return 'Citizen complaint registered.';
+    if (stepSlug === 'verified') return 'Automatic verification criteria met.';
+    if (stepSlug === 'acknowledged') return 'Acknowledged by Municipal Office.';
+    if (stepSlug === 'in_progress') return 'Repair crews dispatch pending.';
+    return 'Awaiting citizen completion review.';
+  };
+
   const steps = [
-    { label: 'Reported', status: 'completed', desc: 'Report submitted by Rohan Sharma.', date: 'Jul 20, 2026' },
-    { label: 'Verified', status: 'completed', desc: 'Auto-verified: threshold of 5 reports crossed.', date: 'Jul 21, 2026' },
-    { label: 'Acknowledged', status: 'current', desc: 'Acknowledged by Public Works Dept (Zone 4).', date: 'Jul 22, 2026' },
-    { label: 'In Progress', status: 'upcoming', desc: 'Repair crew dispatched scheduling.', date: '' },
-    { label: 'Resolved', status: 'upcoming', desc: 'Awaiting completion confirmation.', date: '' },
+    { label: 'Reported', status: getStepStatus('reported'), desc: getStepDesc('reported'), date: getStepDate('reported') },
+    { label: 'Verified', status: getStepStatus('verified'), desc: getStepDesc('verified'), date: getStepDate('verified') },
+    { label: 'Acknowledged', status: getStepStatus('acknowledged'), desc: getStepDesc('acknowledged'), date: getStepDate('acknowledged') },
+    { label: 'In Progress', status: getStepStatus('in_progress'), desc: getStepDesc('in_progress'), date: getStepDate('in_progress') },
+    { label: 'Resolved', status: getStepStatus('resolved'), desc: getStepDesc('resolved'), date: getStepDate('resolved') },
   ];
+
+  // Screen Loader views
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Syncing Ticket Ledger...</p>
+      </div>
+    );
+  }
+
+  if (error || !ticket) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-3 p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500" />
+        <h3 className="text-base font-extrabold text-text-primary">Failed to Sync</h3>
+        <p className="text-xs text-text-secondary max-w-sm leading-relaxed">{error || 'Ticket not found.'}</p>
+        <Link to="/dashboard" className="px-4 py-2 text-xs font-bold bg-primary text-white rounded-button shadow mt-2">
+          Back to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  const capitalizedCategory = ticket.category.charAt(0).toUpperCase() + ticket.category.slice(1);
+  const locationPosition = ticket.location?.coordinates;
+  const displayAddress = ticket.address || `${capitalizedCategory} reported near ${locationPosition?.[1]?.toFixed(4)}°N, ${locationPosition?.[0]?.toFixed(4)}°E`;
+  const dynamicDescription = `Active public ${ticket.category} complaint registered in this zone. Civic authorities have been notified, and community members are actively upvoting this report to highlight its urgency.`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-[#FAFBFD]">
@@ -57,13 +206,17 @@ export default function TicketDetail() {
             
             <div className="flex justify-between items-start flex-wrap gap-4 border-b border-gray-100 pb-6">
               <div className="space-y-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
-                  High Priority
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  ticket.severity === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                  ticket.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  'bg-green-50 text-green-700 border-green-200'
+                }`}>
+                  {ticket.severity} Priority
                 </span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">Pothole on MG Road Highway</h1>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">{capitalizedCategory} Incident</h1>
                 <p className="flex items-center gap-1.5 text-sm text-text-secondary">
                   <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span>Sector 4, MG Road (Near Bus Stop)</span>
+                  <span>{displayAddress}</span>
                 </p>
               </div>
 
@@ -84,8 +237,8 @@ export default function TicketDetail() {
             {/* Custom Carousel */}
             <div className="relative aspect-video w-full bg-gray-50 rounded-card overflow-hidden border border-gray-100 group shadow-inner">
               <img 
-                src={photos[activePhotoIdx].url} 
-                alt="Civic Issue" 
+                src={ticketPhotos[activePhotoIdx]?.url} 
+                alt="Civic Issue Upload" 
                 className="w-full h-full object-cover transition-all duration-500" 
               />
               
@@ -94,26 +247,28 @@ export default function TicketDetail() {
                 <div className="space-y-0.5">
                   <p className="font-bold flex items-center gap-1">
                     <User className="w-3.5 h-3.5 text-accent" />
-                    <span>Submitted by {photos[activePhotoIdx].uploadedBy}</span>
+                    <span>Submitted by {ticketPhotos[activePhotoIdx]?.uploaded_by || 'Citizen'}</span>
                   </p>
-                  <p className="text-gray-300 text-[10px]">Uploaded on {photos[activePhotoIdx].date}</p>
+                  <p className="text-gray-300 text-[10px]">
+                    Uploaded on {ticketPhotos[activePhotoIdx]?.uploaded_at ? new Date(ticketPhotos[activePhotoIdx].uploaded_at).toLocaleDateString() : 'N/A'}
+                  </p>
                 </div>
                 <span className="px-2 py-0.5 bg-white/20 rounded backdrop-blur-md text-[10px] font-bold">
-                  {activePhotoIdx + 1} / {photos.length}
+                  {activePhotoIdx + 1} / {ticketPhotos.length}
                 </span>
               </div>
 
               {/* Navigation Arrows */}
-              {photos.length > 1 && (
+              {ticketPhotos.length > 1 && (
                 <>
                   <button
-                    onClick={() => setActivePhotoIdx(prev => (prev === 0 ? photos.length - 1 : prev - 1))}
+                    onClick={() => setActivePhotoIdx(prev => (prev === 0 ? ticketPhotos.length - 1 : prev - 1))}
                     className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setActivePhotoIdx(prev => (prev === photos.length - 1 ? 0 : prev + 1))}
+                    onClick={() => setActivePhotoIdx(prev => (prev === ticketPhotos.length - 1 ? 0 : prev + 1))}
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -126,7 +281,7 @@ export default function TicketDetail() {
             <div className="space-y-2">
               <h2 className="text-lg font-bold text-text-primary">Description</h2>
               <p className="text-text-secondary text-sm leading-relaxed">
-                Large, deep pothole in the middle lane of the highway. Commuters riding two-wheelers frequently swerve dangerously to avoid it. It gets completely filled with water during rains, making it invisible and highly hazardous. Needs immediate hot mix asphalt patching.
+                {dynamicDescription}
               </p>
             </div>
 
@@ -136,30 +291,47 @@ export default function TicketDetail() {
           <div className="bg-white rounded-card shadow-xl shadow-gray-200/40 border border-gray-100 p-6 space-y-6">
             <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-primary" />
-              <span>Comments (1)</span>
+              <span>Comments ({comments.length})</span>
             </h3>
 
             <div className="space-y-4">
-              <div className="flex gap-3 text-sm border-b border-gray-100 pb-4">
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 font-bold text-xs border border-primary/20">
-                  PS
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-text-primary">Priya Sharma</span>
-                    <span className="text-[10px] text-text-secondary">2 days ago</span>
-                  </div>
-                  <p className="text-text-secondary text-sm mt-1">This has been worsening since the heavy rains last week. Commuters are swerving onto oncoming lanes. Thanks for reporting!</p>
-                </div>
-              </div>
+              {comments.length === 0 ? (
+                <p className="text-xs text-text-secondary italic">No comments posted yet. Be the first to share an update!</p>
+              ) : (
+                comments.map((comment) => {
+                  const authorInitial = comment.user_id ? comment.user_id.slice(-2).toUpperCase() : 'C';
+                  const dateStr = comment.created_at 
+                    ? new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                    : '';
+                  
+                  const currentUserId = sessionStorage.getItem('userId');
+                  const isMe = comment.user_id === currentUserId;
+                  const displayName = isMe 
+                    ? `${sessionStorage.getItem('userName') || 'You'} (Citizen)` 
+                    : `Citizen #${comment.user_id?.slice(-4)}`;
+
+                  return (
+                    <div key={comment.comment_id} className="flex gap-3 text-sm border-b border-gray-100 pb-4 last:border-0 last:pb-0 animate-fade-in">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 font-bold text-xs border border-primary/20">
+                        {authorInitial}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                          <span className="font-bold text-text-primary">{displayName}</span>
+                          <span className="text-[10px] text-text-secondary font-mono">{dateStr}</span>
+                        </div>
+                        <p className="text-text-secondary text-sm mt-1">{comment.text}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             {/* Comment Form input */}
             {!isLoggedIn ? (
               <div className="relative overflow-hidden p-6 bg-gradient-to-r from-primary/[0.03] to-accent/[0.03] border border-primary/10 rounded-card flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300">
-                {/* Decorative background glow */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none -z-10" />
-                
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-primary/10 rounded-full text-primary flex-shrink-0">
                     <MessageSquare className="w-5 h-5 text-primary" />
@@ -182,17 +354,21 @@ export default function TicketDetail() {
                 </Link>
               </div>
             ) : (
-              <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+              <form onSubmit={handlePostComment} className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Write a supportive comment or update..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  disabled={isSubmittingComment}
                   className="flex-1 min-w-0 border border-gray-200 bg-gray-50/50 rounded-button px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all duration-300"
                 />
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-md shadow-primary/10"
+                  disabled={isSubmittingComment || !newComment.trim()}
+                  className="px-5 py-2.5 text-xs font-bold rounded-button bg-primary text-white hover:bg-primary/95 transition-colors shadow-md shadow-primary/10 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Post Comment
+                  {isSubmittingComment ? 'Posting...' : 'Post Comment'}
                 </button>
               </form>
             )}
@@ -256,7 +432,9 @@ export default function TicketDetail() {
                 <Clock className="w-4 h-4 text-primary" />
                 <span>Merged Reports</span>
               </span>
-              <span className="font-bold text-text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px]">12 submissions</span>
+              <span className="font-bold text-text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px]">
+                {ticket.report_count} submissions
+              </span>
             </div>
 
             <div className="flex justify-between items-center text-xs">
@@ -264,7 +442,9 @@ export default function TicketDetail() {
                 <Calendar className="w-4 h-4 text-primary" />
                 <span>Created Date</span>
               </span>
-              <span className="font-bold text-text-primary">Jul 20, 2026</span>
+              <span className="font-bold text-text-primary">
+                {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+              </span>
             </div>
 
             <div className="flex justify-between items-center text-xs border-t border-gray-100 pt-3">
@@ -279,24 +459,12 @@ export default function TicketDetail() {
 
             <div className="border-t border-gray-100 pt-4 mt-2 space-y-3">
               <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    setModalReason('resolve');
-                    setShowAuthModal(true);
-                    return;
-                  }
-                  if (hasVerifiedResolved) {
-                    setHasVerifiedResolved(false);
-                    setVerificationsCount(prev => prev - 1);
-                  } else {
-                    setHasVerifiedResolved(true);
-                    setVerificationsCount(prev => prev + 1);
-                  }
-                }}
-                className={`w-full flex justify-center items-center gap-2 py-2.5 px-4 text-xs font-bold rounded-button transition-all duration-300 active:scale-97 cursor-pointer hover:scale-[1.02] border ${
+                onClick={handleVerifyResolved}
+                disabled={hasVerifiedResolved}
+                className={`w-full flex justify-center items-center gap-2 py-2.5 px-4 text-xs font-bold rounded-button transition-all duration-300 border ${
                   hasVerifiedResolved
-                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-600/10 hover:bg-green-700'
-                    : 'border-green-300 text-green-700 bg-green-500/10 hover:bg-green-500/20'
+                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-600/10 cursor-not-allowed'
+                    : 'border-green-300 text-green-700 bg-green-500/10 hover:bg-green-500/20 cursor-pointer hover:scale-[1.02] active:scale-97'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -314,18 +482,16 @@ export default function TicketDetail() {
         </div>
 
       </div>
+      
       {/* Auth Warning Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Overlay backdrop */}
           <div 
             onClick={() => setShowAuthModal(false)}
             className="absolute inset-0 bg-[#0E131F]/60 backdrop-blur-sm transition-opacity duration-300" 
           />
           
-          {/* Modal Container */}
           <div className="relative bg-white rounded-card border border-gray-100 max-w-md w-full p-8 shadow-2xl space-y-6 transform transition-all duration-300 animate-in zoom-in-95 z-10 text-center">
-            {/* Close button */}
             <button 
               onClick={() => setShowAuthModal(false)}
               className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors"
@@ -333,12 +499,10 @@ export default function TicketDetail() {
               <X className="w-4 h-4" />
             </button>
 
-            {/* Glowing warning icon bubble */}
             <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
               <ShieldAlert className="w-6 h-6 animate-pulse" />
             </div>
 
-            {/* Modal Heading & text */}
             <div className="space-y-1.5">
               <h3 className="text-xl font-black text-text-primary leading-tight">
                 Authentication Required
@@ -351,7 +515,6 @@ export default function TicketDetail() {
               </p>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-2 pt-2">
               <Link
                 to="/login"
