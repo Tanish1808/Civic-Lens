@@ -1,0 +1,22 @@
+{
+  "num_classes": 4,
+  "class_names": [
+    "pothole",
+    "waterlogging",
+    "garbage",
+    "other"
+  ],
+  "classifier": {
+    "f1_macro": 0.9832377255694109,
+    "path": "app/models/classifier.pt"
+  },
+  "severity": {
+    "f1_macro": 0.9936445427370875,
+    "path": "app/models/severity.pt"
+  },
+  "similarity": {
+    "type": "pretrained",
+    "threshold": 0.85,
+    "path": "app/models/similarity.pt"
+  }
+}
