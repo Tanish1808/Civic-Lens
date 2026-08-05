@@ -138,7 +138,14 @@ class ManualReviewQueueResolveView(APIView):
 
         report = Report.objects(id=report_id).first()
         if not report:
-            return error("NOT_FOUND", "Report not found.", status=404)
+            # Gracefully clear the orphaned queue entry
+            entry.resolved = True
+            entry.resolved_by = str(request.user.id)
+            entry.save()
+            return success({
+                "report_id": report_id,
+                "message": "Orphaned queue entry resolved and cleared."
+            })
 
         report.ml_category = category
         report.ml_severity = severity
