@@ -15,4 +15,5 @@ urlpatterns = [
     path("admin/tickets/<str:ticket_id>/status", admin_views.AdminTicketStatusUpdateView.as_view()),
     path("admin/tickets/<str:ticket_id>/override", admin_views.AdminTicketOverrideView.as_view()),
     path("admin/tickets/<str:ticket_id>/flag-spam", admin_views.AdminFlagSpamView.as_view()),
+    path("admin/tickets/<str:ticket_id>/unflag-spam", admin_views.AdminUnflagSpamView.as_view()),
 ]
