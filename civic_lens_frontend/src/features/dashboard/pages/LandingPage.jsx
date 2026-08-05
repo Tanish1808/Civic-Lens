@@ -7,6 +7,7 @@ export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [showGuidelinesModal, setShowGuidelinesModal] = useState(false);
 
   // Form states for support portal
   const [contactName, setContactName] = useState('');
@@ -453,10 +454,24 @@ export default function LandingPage() {
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase tracking-wider text-[10px]">Civic Resources</h4>
             <ul className="space-y-2">
-              <li><Link to="/report" className="hover:text-white transition-colors">Reporting Guidelines</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Local Ward Helpdesk</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Municipal Directory</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Open Data Portal</a></li>
+              <li>
+                <button 
+                  onClick={() => setShowGuidelinesModal(true)} 
+                  className="hover:text-white transition-colors text-left bg-transparent border-none p-0 cursor-pointer text-gray-400 font-semibold"
+                >
+                  Reporting Guidelines
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => setShowContactModal(true)} 
+                  className="hover:text-white transition-colors text-left bg-transparent border-none p-0 cursor-pointer text-gray-400 font-semibold"
+                >
+                  Contact Support Portal
+                </button>
+              </li>
+              <li><a href="https://data.gov.in" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">National Open Data</a></li>
+              <li className="text-gray-500 font-semibold text-[11px] select-none">AMC Helpline: 155303</li>
             </ul>
           </div>
 
@@ -616,6 +631,68 @@ export default function LandingPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Guidelines Modal Overlay */}
+      {showGuidelinesModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setShowGuidelinesModal(false)}
+          />
+          
+          {/* Modal Card */}
+          <div className="bg-white rounded-card shadow-2xl border border-gray-150 p-6 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 text-left">
+            <button
+              onClick={() => setShowGuidelinesModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-text-primary transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-text-primary">Reporting Guidelines</h3>
+                <p className="text-xs text-text-secondary">Follow these steps to submit clear, actionable civic complaints.</p>
+              </div>
+
+              <div className="border-t border-gray-100 pt-3 space-y-3.5 text-xs text-text-primary">
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">1</div>
+                  <div>
+                    <h4 className="font-bold">Capture a Clear Photo</h4>
+                    <p className="text-text-secondary text-[11px] leading-relaxed">Take a clear, well-lit photo of the street defect. Avoid taking pictures of computer screens or old paper printouts.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">2</div>
+                  <div>
+                    <h4 className="font-bold">Provide High-Accuracy GPS Location</h4>
+                    <p className="text-text-secondary text-[11px] leading-relaxed">Enable GPS/location permissions in your browser so the map pin accurately matches where the issue is happening.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">3</div>
+                  <div>
+                    <h4 className="font-bold">Pick the Correct Category</h4>
+                    <p className="text-text-secondary text-[11px] leading-relaxed">Categorize your issue correctly (e.g. pothole, garbage, streetlight, or waterlogging) to ensure automatic routing to the right department.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 flex">
+                <button
+                  onClick={() => setShowGuidelinesModal(false)}
+                  className="w-full py-2.5 bg-primary hover:bg-primary/95 text-white text-xs font-extrabold rounded-button shadow-md shadow-primary/10 transition-colors text-center"
+                >
+                  Got It, Thanks!
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
