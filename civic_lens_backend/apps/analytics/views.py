@@ -129,7 +129,7 @@ class ResolutionTrendView(APIView):
         if not _check_admin(request):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
-        interval = request.query_params.get("interval", "week")
+        interval = request.query_params.get("interval", "day")
         
         date_from = request.query_params.get("date_from")
         date_to = request.query_params.get("date_to")
@@ -143,7 +143,14 @@ class ResolutionTrendView(APIView):
         for t in queryset:
             if not t.created_at:
                 continue
-            period = t.created_at.strftime("%Y-%U" if interval == "week" else "%Y-%m")
+            
+            if interval == "day":
+                period = t.created_at.strftime("%Y-%m-%d")
+            elif interval == "week":
+                period = t.created_at.strftime("%Y-%U")
+            else:
+                period = t.created_at.strftime("%Y-%m")
+
             if period not in periods:
                 periods[period] = {"created": 0, "resolved": 0, "resolution_times": []}
 

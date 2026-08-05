@@ -17,10 +17,38 @@ export default function AdminAnalytics() {
       api.get('/admin/analytics/severity-distribution')
     ])
       .then(([trendRes, catRes, sevRes]) => {
+        // Format period string dynamically (e.g. 2026-08-03 to Mon, Aug 3)
+        const formatPeriod = (period) => {
+          if (!period) return '';
+          const parts = period.split('-');
+          if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            const date = new Date(year, month, day);
+            if (!isNaN(date.getTime())) {
+              return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            }
+          }
+          if (parts.length === 2) {
+            const year = parts[0];
+            const num = parseInt(parts[1], 10);
+            if (!isNaN(num)) {
+              if (num <= 12) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${months[num - 1]} ${year}`;
+              } else {
+                return `Week ${num}, ${year}`;
+              }
+            }
+          }
+          return period;
+        };
+
         // 1. Process Trend Data
         const rawTrends = trendRes.data.data.trend || [];
         const trends = rawTrends.map(t => ({
-          name: t.period,
+          name: formatPeriod(t.period),
           reported: t.created_count,
           resolved: t.resolved_count
         }));
@@ -92,9 +120,9 @@ export default function AdminAnalytics() {
             <TrendingUp className="w-4 h-4 text-amber-500" />
             <span>Reporting vs. Resolution Trends</span>
           </h2>
-          <div className="h-72 w-full text-xs">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <div className="h-72 w-full text-xs relative">
+            <ResponsiveContainer width="100%" height="100%" minHeight={288}>
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorReported" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#1E5F8C" stopOpacity={0.2}/>
@@ -107,7 +135,7 @@ export default function AdminAnalytics() {
                 </defs>
                 <CartesianGrid stroke="#1F2937" strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
                 />
