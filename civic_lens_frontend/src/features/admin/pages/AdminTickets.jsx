@@ -566,7 +566,7 @@ export default function AdminTickets() {
                             : `http://localhost:8000${p.url.startsWith('/') ? '' : '/'}${p.url}`
                         ) : ''} 
                         alt="Ticket attachment" 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-full object-contain" 
                       />
                       <span className="absolute bottom-1 right-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-gray-300">
                         Uploaded by {p.uploaded_by}
