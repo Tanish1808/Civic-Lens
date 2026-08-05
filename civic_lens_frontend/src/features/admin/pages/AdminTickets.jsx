@@ -81,12 +81,18 @@ export default function AdminTickets() {
 
     api.get('/admin/tickets', { params })
       .then((response) => {
-        const loaded = (response.data.data.tickets || []).map(t => ({
-          ...t,
-          id: t.ticket_id,
-          reports: t.report_count ?? 1,
-          votes: t.upvote_count ?? 0
-        }));
+        const loaded = (response.data.data.tickets || []).map(t => {
+          const lat = t.location?.coordinates?.[1];
+          const lng = t.location?.coordinates?.[0];
+          const coordStr = (lat !== undefined && lng !== undefined) ? `Ahmedabad (Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)})` : 'Ahmedabad Grid';
+          return {
+            ...t,
+            id: t.ticket_id,
+            reports: t.report_count ?? 1,
+            votes: t.upvote_count ?? 0,
+            address: coordStr
+          };
+        });
         setTickets(loaded);
         setIsLoading(false);
       })
