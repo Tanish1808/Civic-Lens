@@ -160,3 +160,18 @@ class ManualReviewQueueResolveView(APIView):
         entry.save()
 
         return success({"report_id": report_id, "resulting_ticket_id": str(ticket.id)})
+
+
+class ReportDetailView(APIView):
+    def delete(self, request, report_id):
+        if not _require_auth(request):
+            return error("UNAUTHORIZED", "Authentication required.", status=401)
+
+        report = Report.objects(id=report_id).first()
+        if not report:
+            return error("NOT_FOUND", "Report not found.", status=404)
+        if report.user_id != str(request.user.id):
+            return error("FORBIDDEN", "You do not own this report.", status=403)
+
+        report.delete()
+        return success({"message": "Report deleted successfully."})

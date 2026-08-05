@@ -51,6 +51,16 @@ class Report(Document):
         }
 
     def to_summary_dict(self):
+        is_ticket_spam = False
+        if self.merged_into_ticket_id:
+            try:
+                from apps.tickets.models import Ticket
+                t = Ticket.objects(id=self.merged_into_ticket_id).first()
+                if t:
+                    is_ticket_spam = t.is_flagged_spam
+            except Exception:
+                pass
+
         return {
             "report_id": str(self.id),
             "photo_url": self.photo_url,
@@ -58,6 +68,7 @@ class Report(Document):
             "ml_severity": self.ml_severity,
             "status": self.status,
             "ticket_id": self.merged_into_ticket_id,
+            "is_ticket_spam": is_ticket_spam,
             "description": self.description,
             "location": self.location,
             "created_at": self.created_at.isoformat() if self.created_at else None,

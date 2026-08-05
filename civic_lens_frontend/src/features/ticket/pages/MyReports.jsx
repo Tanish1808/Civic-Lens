@@ -1,12 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Eye, MapPin, Plus, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar, Eye, MapPin, Plus, FileText, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import api from '../../../services/api';
 
 export default function MyReports() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSpamModal, setShowSpamModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteReport = () => {
+    if (!reportToDelete) return;
+    setIsDeleting(true);
+    api.delete(`/reports/${reportToDelete}`)
+      .then(() => {
+        setReports(prev => prev.filter(r => r.id !== reportToDelete));
+        setReportToDelete(null);
+        setIsDeleting(false);
+      })
+      .catch((err) => {
+        console.error('Failed to delete report:', err);
+        alert('Failed to delete report. Please try again.');
+        setIsDeleting(false);
+      });
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -22,6 +41,7 @@ export default function MyReports() {
           return {
             id: r.report_id,
             ticketId: r.ticket_id,
+            isTicketSpam: r.is_ticket_spam,
             category: displayCategory,
             location: lat && lng ? `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E` : 'Ahmedabad Grid',
             status: r.status.replace('_', ' '),
@@ -130,24 +150,102 @@ export default function MyReports() {
               </div>
 
               {/* Right button action */}
-              <div className="w-full sm:w-auto flex-shrink-0">
+              <div className="w-full sm:w-auto flex-shrink-0 flex items-center gap-3">
                 {report.ticketId ? (
                   <Link
                     to={`/ticket/${report.ticketId}`}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-primary/15 text-xs font-bold rounded-button bg-primary/5 text-primary hover:bg-primary hover:text-white hover:border-transparent transition-all duration-300 shadow-sm active:scale-97 hover:scale-[1.02] hover:shadow-md hover:shadow-primary/10 cursor-pointer"
+                    onClick={(e) => {
+                      if (report.isTicketSpam) {
+                        e.preventDefault();
+                        setShowSpamModal(true);
+                      }
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-primary/15 text-xs font-bold rounded-button bg-primary/5 text-primary hover:bg-primary hover:text-white hover:border-transparent transition-all duration-300 shadow-sm active:scale-97 hover:scale-[1.02] hover:shadow-md hover:shadow-primary/10 cursor-pointer flex-1"
                   >
                     <Eye className="w-4 h-4 text-current" />
                     <span>Track Ticket</span>
                   </Link>
                 ) : (
-                  <div className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded font-bold uppercase tracking-wider text-center select-none">
+                  <div className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded font-bold uppercase tracking-wider text-center select-none flex-1">
                     Awaiting Triage
                   </div>
                 )}
+                <button
+                  onClick={() => setReportToDelete(report.id)}
+                  className="p-2.5 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-transparent rounded-button transition-all duration-300 active:scale-95 cursor-pointer"
+                  title="Delete Report"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
 
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Spam Ticket Warning Modal */}
+      {showSpamModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-gray-100 rounded-card shadow-2xl p-6 max-w-sm w-full space-y-4 animate-scaleUp">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-red-50 text-red-500 rounded-full">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-text-primary">Ticket Removed</h3>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              This report was merged into a ticket that has been flagged as spam and removed by the administrator.
+            </p>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowSpamModal(false)}
+                className="px-4 py-2 bg-primary hover:bg-primary/95 text-white text-xs font-bold rounded-button transition-colors cursor-pointer"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-gray-100 rounded-card shadow-2xl p-6 max-w-sm w-full space-y-4 animate-scaleUp">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-red-50 text-red-500 rounded-full">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-text-primary">Delete Submission</h3>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Are you sure you want to delete this report submission? This will clear it from your history and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReportToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-text-primary text-xs font-bold rounded-button transition-colors cursor-pointer disabled:opacity-55"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteReport}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-button transition-colors cursor-pointer disabled:opacity-55 flex items-center gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete</span>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
