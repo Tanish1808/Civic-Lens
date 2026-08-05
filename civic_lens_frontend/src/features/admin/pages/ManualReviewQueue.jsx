@@ -221,7 +221,7 @@ export default function ManualReviewQueue() {
                           : `http://localhost:8000${r.photo_url.startsWith('/') ? '' : '/'}${r.photo_url}`
                       ) : ''} 
                       alt="Low confidence upload" 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-contain" 
                     />
                     <div className="absolute top-2 left-2 bg-black/60 rounded backdrop-blur-sm px-2 py-1 text-[9px] font-mono text-white flex items-center gap-1">
                       <MapPin className="w-3 h-3 text-red-400" />
