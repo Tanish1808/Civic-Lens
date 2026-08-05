@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, User, Mail } from 'lucide-react';
+import { BarChart3, LayoutDashboard, ListChecks, FileClock, ShieldAlert, LogOut, User, Mail, Map } from 'lucide-react';
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -54,6 +54,11 @@ export default function AdminSidebar() {
           <NavLink to="/admin/overview" className={activeStyle}>
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard Overview</span>
+          </NavLink>
+          
+          <NavLink to="/admin/map" className={activeStyle}>
+            <Map className="w-4 h-4" />
+            <span>Geospatial Map</span>
           </NavLink>
           
           <NavLink to="/admin/tickets" className={activeStyle}>

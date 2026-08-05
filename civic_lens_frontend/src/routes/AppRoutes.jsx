@@ -21,6 +21,7 @@ import AdminAnalytics from '../features/admin/pages/AdminAnalytics';
 import ManualReviewQueue from '../features/admin/pages/ManualReviewQueue';
 import AdminAuditLog from '../features/admin/pages/AdminAuditLog';
 import AdminRequests from '../features/admin/pages/AdminRequests';
+import AdminMap from '../features/admin/pages/AdminMap';
 
 // Route protection wrapper for Citizens
 function ProtectedRoute({ children }) {
@@ -110,6 +111,7 @@ export default function AppRoutes() {
       {/* Admin routes */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/overview" element={<AdminOverview />} />
+        <Route path="/admin/map" element={<AdminMap />} />
         <Route path="/admin/tickets" element={<AdminTickets />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/review-queue" element={<ManualReviewQueue />} />
