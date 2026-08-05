@@ -34,7 +34,8 @@ class AdminTicketListView(APIView):
         if not _check_admin(request):
             return error("FORBIDDEN", "Admin role required.", status=403)
 
-        queryset = Ticket.objects()
+        show_spam = request.query_params.get("show_spam", "false") == "true"
+        queryset = Ticket.objects(is_flagged_spam=show_spam)
         category = request.query_params.get("category")
         severity = request.query_params.get("severity")
         status_ = request.query_params.get("status")
@@ -206,3 +207,26 @@ def _notify_reporters(ticket, new_status):
     }
     for user_id in reporter_ids:
         NotificationService.notify_status_change(user_id, str(ticket.id), new_status)
+
+
+class AdminUnflagSpamView(APIView):
+    def patch(self, request, ticket_id):
+        if not _check_admin(request):
+            return error("FORBIDDEN", "Admin role required.", status=403)
+
+        ticket = Ticket.objects(id=ticket_id).first()
+        if not ticket:
+            return error("NOT_FOUND", "Ticket not found.", status=404)
+
+        ticket.is_flagged_spam = False
+        ticket.save()
+
+        AuditService.record(
+            actor_id=str(request.user.id),
+            action_type="unflag_spam",
+            target_ticket_id=str(ticket.id),
+            before_value={"is_flagged_spam": True},
+            after_value={"is_flagged_spam": False},
+        )
+
+        return success({"ticket_id": str(ticket.id), "is_flagged_spam": False})
