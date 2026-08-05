@@ -90,7 +90,7 @@ class MLClient:
     TIMEOUT_SECONDS = 8
 
     @classmethod
-    def infer(cls, image_url):
+    def infer(cls, image_url, user_selected_category=None):
         """
         Returns dict: {category, severity, confidence, embedding, perceptual_hash}
         Returns None on failure/timeout — caller must route to manual review
@@ -99,7 +99,10 @@ class MLClient:
         try:
             resp = requests.post(
                 f"{settings.ML_SERVICE_BASE_URL}/infer",
-                json={"image_url": image_url},
+                json={
+                    "image_url": image_url,
+                    "user_selected_category": user_selected_category
+                },
                 timeout=cls.TIMEOUT_SECONDS,
             )
             resp.raise_for_status()
@@ -139,7 +142,7 @@ class ReportSubmissionService:
 
     @staticmethod
     def process(report):
-        inference = MLClient.infer(report.photo_url)
+        inference = MLClient.infer(report.photo_url, report.user_selected_category)
 
         if inference is None:
             # ML service unreachable -> graceful degradation to manual review
