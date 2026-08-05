@@ -77,6 +77,7 @@ except Exception as e:
 
 class InferenceRequest(BaseModel):
     image_url: str
+    user_selected_category: str = None
 
 
 def compute_perceptual_hash(image: Image.Image) -> str:
@@ -135,29 +136,87 @@ async def infer(request: InferenceRequest):
     # 2. Compute perceptual hash
     p_hash = compute_perceptual_hash(img)
     
-    # 3. Model predictions fallback structure
+    # 3. Model predictions
     category = "other"
     severity = "medium"
     confidence = 0.85
+    models_loaded_local = False
     
-    # Mocking classification based on keywords in URL for robust stubs
-    url_lower = request.image_url.lower()
-    if "pothole" in url_lower:
-        category = "pothole"
-        severity = "high"
-    elif "garbage" in url_lower:
-        category = "garbage"
-        severity = "medium"
-    elif "waterlogging" in url_lower or "flood" in url_lower:
-        category = "waterlogging"
-        severity = "high"
-    elif "streetlight" in url_lower:
-        category = "streetlight"
-        severity = "low"
-    else:
-        categories = ["pothole", "garbage", "waterlogging", "streetlight"]
-        category = categories[hash(request.image_url) % len(categories)]
-        severity = "medium"
+    if models_loaded:
+        try:
+            # Preprocess image to standard PyTorch format: 224x224 RGB tensor with ImageNet normalization
+            preprocess_img = img.convert("RGB").resize((224, 224))
+            img_arr = np.array(preprocess_img, dtype=np.float32) / 255.0
+            
+            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+            std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+            img_arr = (img_arr - mean) / std
+            img_arr = img_arr.transpose((2, 0, 1))
+            
+            tensor = torch.from_numpy(img_arr).unsqueeze(0)
+            
+            # Predict category
+            with torch.no_grad():
+                outputs = classifier_model(tensor)
+                probs = torch.nn.functional.softmax(outputs, dim=1)
+                conf, pred = torch.max(probs, dim=1)
+                confidence = float(conf.item())
+                
+                categories = ["pothole", "garbage", "waterlogging", "streetlight"]
+                class_idx = int(pred.item())
+                if 0 <= class_idx < len(categories):
+                    category = categories[class_idx]
+            
+            # Predict severity
+            if severity_model is not None:
+                with torch.no_grad():
+                    sev_outputs = severity_model(tensor)
+                    sev_probs = torch.nn.functional.softmax(sev_outputs, dim=1)
+                    _, sev_pred = torch.max(sev_probs, dim=1)
+                    
+                    severities = ["low", "medium", "high"]
+                    sev_idx = int(sev_pred.item())
+                    if 0 <= sev_idx < len(severities):
+                        severity = severities[sev_idx]
+            
+            logger.info(f"PyTorch model inference successful: category={category}, severity={severity}, confidence={confidence}")
+            models_loaded_local = True
+        except Exception as e:
+            logger.error(f"PyTorch model inference failed: {e}. Falling back to sandbox stubs.")
+            models_loaded_local = False
+            
+    # Sandbox / Stub fallbacks
+    if not models_loaded_local:
+        if request.user_selected_category:
+            category = request.user_selected_category
+            if category == "pothole":
+                severity = "high"
+            elif category == "garbage":
+                severity = "medium"
+            elif category == "waterlogging":
+                severity = "high"
+            elif category == "streetlight":
+                severity = "low"
+            else:
+                severity = "medium"
+        else:
+            url_lower = request.image_url.lower()
+            if "pothole" in url_lower:
+                category = "pothole"
+                severity = "high"
+            elif "garbage" in url_lower:
+                category = "garbage"
+                severity = "medium"
+            elif "waterlogging" in url_lower or "flood" in url_lower:
+                category = "waterlogging"
+                severity = "high"
+            elif "streetlight" in url_lower:
+                category = "streetlight"
+                severity = "low"
+            else:
+                categories = ["pothole", "garbage", "waterlogging", "streetlight"]
+                category = categories[hash(request.image_url) % len(categories)]
+                severity = "medium"
 
     # Generate 128-element embedding vector (unit normalized)
     np.random.seed(hash(request.image_url) % (2**32))
