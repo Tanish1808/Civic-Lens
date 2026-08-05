@@ -153,3 +153,14 @@ class Comment(Document):
             "user_id": self.user_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class ResolutionSignal(Document):
+    ticket_id = StringField(required=True)
+    user_id = StringField(required=True)
+    created_at = DateTimeField(default=datetime.datetime.utcnow)
+
+    meta = {
+        "collection": "resolution_signals",
+        "indexes": [{"fields": ("ticket_id", "user_id"), "unique": True}],
+    }
