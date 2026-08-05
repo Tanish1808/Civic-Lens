@@ -22,6 +22,22 @@ const getCategoryPhoto = (category) => {
   return CATEGORY_IMAGES.Default;
 };
 
+const CATEGORY_MAP = {
+  'Pothole': 'pothole',
+  'Waterlogging': 'waterlogging',
+  'Streetlight Fault': 'streetlight',
+  'Garbage/Dumping': 'garbage',
+  'Other Issues': 'other'
+};
+
+const STATUS_MAP = {
+  'Reported': 'reported',
+  'Verified': 'verified',
+  'Acknowledged': 'acknowledged',
+  'In Progress': 'in_progress',
+  'Resolved': 'resolved'
+};
+
 // Create pulsing neon marker icons based on severity
 const createSeverityMarker = (severity) => {
   const color =
@@ -44,13 +60,48 @@ const createSeverityMarker = (severity) => {
 
 export default function MapDashboard() {
   const [showFilters, setShowFilters] = useState(true);
-  const [selectedSeverity, setSelectedSeverity] = useState({ low: true, medium: true, high: true });
+  const [selectedSeverity, setSelectedSeverity] = useState(() => {
+    const cached = sessionStorage.getItem('map_selected_severity');
+    return cached ? JSON.parse(cached) : { low: true, medium: true, high: true };
+  });
+
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    const cached = sessionStorage.getItem('map_selected_categories');
+    return cached ? JSON.parse(cached) : { pothole: true, waterlogging: true, streetlight: true, garbage: true, other: true };
+  });
+
+  const [selectedStatuses, setSelectedStatuses] = useState(() => {
+    const cached = sessionStorage.getItem('map_selected_statuses');
+    return cached ? JSON.parse(cached) : { reported: true, verified: true, acknowledged: true, in_progress: true, resolved: true };
+  });
+
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return sessionStorage.getItem('map_search_term') || '';
+  });
+
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
   // Pilot Center: Ahmedabad coordinates from documents
   const centerPosition = [23.0225, 72.5714];
+
+  // Persist filters in sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('map_selected_severity', JSON.stringify(selectedSeverity));
+  }, [selectedSeverity]);
+
+  useEffect(() => {
+    sessionStorage.setItem('map_selected_categories', JSON.stringify(selectedCategories));
+  }, [selectedCategories]);
+
+  useEffect(() => {
+    sessionStorage.setItem('map_selected_statuses', JSON.stringify(selectedStatuses));
+  }, [selectedStatuses]);
+
+  useEffect(() => {
+    sessionStorage.setItem('map_search_term', searchTerm);
+  }, [searchTerm]);
 
   useEffect(() => {
     api.get('/tickets')
@@ -84,7 +135,35 @@ export default function MapDashboard() {
       });
   }, []);
 
-  const filteredTickets = tickets.filter(t => selectedSeverity[t.severity]);
+  const handleResetFilters = () => {
+    setSelectedSeverity({ low: true, medium: true, high: true });
+    setSelectedCategories({ pothole: true, waterlogging: true, streetlight: true, garbage: true, other: true });
+    setSelectedStatuses({ reported: true, verified: true, acknowledged: true, in_progress: true, resolved: true });
+    setSearchTerm('');
+  };
+
+  const filteredTickets = tickets.filter(t => {
+    // 1. Severity filter
+    if (!selectedSeverity[t.severity]) return false;
+    
+    // 2. Category filter
+    const backendCat = t.category.toLowerCase();
+    if (!selectedCategories[backendCat]) return false;
+    
+    // 3. Status filter
+    if (!selectedStatuses[t.status]) return false;
+    
+    // 4. Search text filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      const matchCategory = t.category.toLowerCase().includes(query);
+      const matchAddress = t.address.toLowerCase().includes(query);
+      const matchId = t.id.toLowerCase().includes(query);
+      if (!matchCategory && !matchAddress && !matchId) return false;
+    }
+    
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -118,37 +197,44 @@ export default function MapDashboard() {
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold text-text-primary">Filter Reports</h2>
             <button 
-              onClick={() => setSelectedSeverity({ low: true, medium: true, high: true })}
+              onClick={handleResetFilters}
               className="text-text-secondary hover:text-text-primary p-1 hover:bg-gray-100 rounded transition-colors"
               title="Reset Filters"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
-
+ 
           {/* Search bar */}
           <div className="relative">
             <input
               type="text"
               placeholder="Search reports or areas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-button bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all duration-300"
             />
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
           </div>
-
+ 
           {/* Category Filters */}
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Issue Category</h3>
             <div className="space-y-2">
-              {['Pothole', 'Waterlogging', 'Streetlight Fault', 'Garbage/Dumping'].map((cat) => (
-                <label key={cat} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer hover:text-black">
-                  <input type="checkbox" defaultChecked className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" />
-                  <span className="font-medium">{cat}</span>
+              {Object.entries(CATEGORY_MAP).map(([label, value]) => (
+                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer hover:text-black">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedCategories[value]} 
+                    onChange={() => setSelectedCategories({ ...selectedCategories, [value]: !selectedCategories[value] })}
+                    className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" 
+                  />
+                  <span className="font-medium">{label}</span>
                 </label>
               ))}
             </div>
           </div>
-
+ 
           {/* Severity Filters */}
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Severity Level</h3>
@@ -166,15 +252,20 @@ export default function MapDashboard() {
               ))}
             </div>
           </div>
-
+ 
           {/* Status Filters */}
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Lifecycle Status</h3>
             <div className="space-y-2">
-              {['Reported', 'Verified', 'Acknowledged', 'In Progress', 'Resolved'].map((stat) => (
-                <label key={stat} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer">
-                  <input type="checkbox" defaultChecked className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" />
-                  <span className="font-medium">{stat}</span>
+              {Object.entries(STATUS_MAP).map(([label, value]) => (
+                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedStatuses[value]} 
+                    onChange={() => setSelectedStatuses({ ...selectedStatuses, [value]: !selectedStatuses[value] })}
+                    className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" 
+                  />
+                  <span className="font-medium">{label}</span>
                 </label>
               ))}
             </div>
