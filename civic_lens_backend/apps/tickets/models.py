@@ -60,6 +60,8 @@ class Ticket(Document):
         self.updated_at = datetime.datetime.utcnow()
         res = super().save(*args, **kwargs)
         try:
+            from django.core.cache import cache
+            cache.delete("tickets_list:")
             from apps.analytics.views import invalidate_analytics_cache
             invalidate_analytics_cache()
         except Exception:
