@@ -83,7 +83,9 @@ export default function AdminTickets() {
       .then((response) => {
         const loaded = (response.data.data.tickets || []).map(t => ({
           ...t,
-          id: t.ticket_id
+          id: t.ticket_id,
+          reports: t.report_count ?? 1,
+          votes: t.upvote_count ?? 0
         }));
         setTickets(loaded);
         setIsLoading(false);
