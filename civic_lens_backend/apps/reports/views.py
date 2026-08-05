@@ -18,7 +18,7 @@ class ReportSubmitThrottle(ScopedActionThrottle):
 
 
 def _require_auth(request):
-    return request.user.is_authenticated
+    return request.user is not None and request.user.is_authenticated
 
 
 class ReportSubmitView(APIView):
