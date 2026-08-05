@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit3, Trash2, ShieldAlert, Loader2, AlertCircle, X, Check, Save } from 'lucide-react';
+import { Eye, Edit3, Trash2, ShieldAlert, Loader2, AlertCircle, X, Check, Save, RotateCcw } from 'lucide-react';
 import api from '../../../services/api';
 
 function ImageWithFallback({ src, alt, className }) {
@@ -44,11 +44,37 @@ export default function AdminTickets() {
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Active Tab: 'active' | 'flagged'
+  const [activeTab, setActiveTab] = useState('active');
+
+  // Custom modal configuration
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: 'alert',
+    title: '',
+    message: '',
+    onConfirm: null,
+    severity: 'info'
+  });
+
+  const showModal = (config) => {
+    setModalConfig({
+      isOpen: true,
+      type: config.type || 'alert',
+      title: config.title || '',
+      message: config.message || '',
+      onConfirm: config.onConfirm || null,
+      severity: config.severity || 'info'
+    });
+  };
+
   const fetchTickets = () => {
     setIsLoading(true);
     setError(null);
 
-    const params = {};
+    const params = {
+      show_spam: activeTab === 'flagged'
+    };
     if (selectedCategory) params.category = selectedCategory;
     if (selectedSeverity) params.severity = selectedSeverity;
     if (selectedStatus) params.status = selectedStatus;
@@ -71,7 +97,7 @@ export default function AdminTickets() {
 
   useEffect(() => {
     fetchTickets();
-  }, [selectedCategory, selectedSeverity, selectedStatus]);
+  }, [selectedCategory, selectedSeverity, selectedStatus, activeTab]);
 
   const handleOpenEdit = (t) => {
     setEditingTicket(t);
@@ -120,25 +146,83 @@ export default function AdminTickets() {
         setIsSavingEdit(false);
         setEditingTicket(null);
         fetchTickets();
+        showModal({
+          type: 'alert',
+          severity: 'success',
+          title: 'Ticket Updated',
+          message: 'The ticket attributes and override history logs have been updated successfully.'
+        });
       })
       .catch((err) => {
         console.error('Failed to update ticket attributes:', err);
-        alert(err.response?.data?.error?.message || 'Failed to update ticket. Please check status transition rules.');
+        showModal({
+          type: 'alert',
+          severity: 'error',
+          title: 'Update Failed',
+          message: err.response?.data?.error?.message || 'Failed to update ticket. Please check status transition rules.'
+        });
         setIsSavingEdit(false);
       });
   };
 
   const handleFlagSpam = (id) => {
-    if (!window.confirm('Are you sure you want to flag this ticket as spam? This action is logged.')) return;
-    
-    api.post(`/admin/tickets/${id}/flag-spam`)
-      .then(() => {
-        fetchTickets();
-      })
-      .catch((err) => {
-        console.error('Failed to flag spam:', err);
-        alert('Failed to flag spam.');
-      });
+    showModal({
+      type: 'confirm',
+      severity: 'warning',
+      title: 'Flag Ticket as Spam',
+      message: 'Are you sure you want to flag this ticket as spam? This action will remove the ticket from active dashboards.',
+      onConfirm: () => {
+        api.patch(`/admin/tickets/${id}/flag-spam`)
+          .then(() => {
+            fetchTickets();
+            showModal({
+              type: 'alert',
+              severity: 'success',
+              title: 'Spam Flagged',
+              message: 'The ticket has been successfully marked as spam and removed from view.'
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to flag spam:', err);
+            showModal({
+              type: 'alert',
+              severity: 'error',
+              title: 'Action Failed',
+              message: 'Failed to flag this ticket as spam. Please try again.'
+            });
+          });
+      }
+    });
+  };
+
+  const handleUnflagSpam = (id) => {
+    showModal({
+      type: 'confirm',
+      severity: 'info',
+      title: 'Restore Ticket',
+      message: 'Are you sure you want to restore this ticket? It will be moved back to the active tickets list.',
+      onConfirm: () => {
+        api.patch(`/admin/tickets/${id}/unflag-spam`)
+          .then(() => {
+            fetchTickets();
+            showModal({
+              type: 'alert',
+              severity: 'success',
+              title: 'Ticket Restored',
+              message: 'The ticket has been successfully restored to the active list.'
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to restore ticket:', err);
+            showModal({
+              type: 'alert',
+              severity: 'error',
+              title: 'Restore Failed',
+              message: 'Failed to restore this ticket. Please try again.'
+            });
+          });
+      }
+    });
   };
 
   const handleExportCSV = () => {
@@ -178,6 +262,37 @@ export default function AdminTickets() {
             Export CSV
           </button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-850 gap-6 text-xs font-semibold px-1">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`pb-3 transition-all cursor-pointer relative ${
+            activeTab === 'active' 
+              ? 'text-amber-500 font-extrabold' 
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          Active Tickets
+          {activeTab === 'active' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('flagged')}
+          className={`pb-3 transition-all cursor-pointer relative flex items-center gap-1.5 ${
+            activeTab === 'flagged' 
+              ? 'text-amber-500 font-extrabold' 
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-red-400/80" />
+          <span>Flagged Tickets</span>
+          {activeTab === 'flagged' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+          )}
+        </button>
       </div>
 
       {/* Main Table Grid Card */}
@@ -286,21 +401,36 @@ export default function AdminTickets() {
                       <button 
                         onClick={() => setSelectedViewTicket(t)}
                         className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-gray-800 transition-colors inline-flex cursor-pointer"
+                        title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => handleOpenEdit(t)}
-                        className="p-1.5 text-gray-400 hover:text-amber-400 rounded hover:bg-amber-500/10 transition-colors inline-flex cursor-pointer"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleFlagSpam(t.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-400 rounded hover:bg-red-500/10 transition-colors inline-flex cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {activeTab === 'active' ? (
+                        <>
+                          <button 
+                            onClick={() => handleOpenEdit(t)}
+                            className="p-1.5 text-gray-400 hover:text-amber-400 rounded hover:bg-amber-500/10 transition-colors inline-flex cursor-pointer"
+                            title="Edit / Override"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleFlagSpam(t.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 rounded hover:bg-red-500/10 transition-colors inline-flex cursor-pointer"
+                            title="Flag as Spam"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => handleUnflagSpam(t.id)}
+                          className="p-1.5 text-gray-400 hover:text-green-400 rounded hover:bg-green-500/10 transition-colors inline-flex cursor-pointer"
+                          title="Restore Ticket"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -511,6 +641,72 @@ export default function AdminTickets() {
                 Close Details
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Dialog Modal */}
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-[#151B26] border border-gray-800 rounded-card p-6 w-full max-w-md shadow-2xl space-y-6">
+            
+            <div className="flex items-start gap-4">
+              {modalConfig.severity === 'warning' && (
+                <div className="p-3 rounded-full bg-amber-500/10 text-amber-500 shrink-0">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'error' && (
+                <div className="p-3 rounded-full bg-red-500/10 text-red-500 shrink-0">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'success' && (
+                <div className="p-3 rounded-full bg-green-500/10 text-green-500 shrink-0">
+                  <Check className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'info' && (
+                <div className="p-3 rounded-full bg-blue-500/10 text-blue-500 shrink-0">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+              )}
+              
+              <div className="space-y-2 flex-1">
+                <h3 className="text-lg font-bold text-white leading-none">{modalConfig.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{modalConfig.message}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-800/80">
+              {modalConfig.type === 'confirm' && (
+                <button
+                  onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2 border border-gray-800 rounded-button bg-transparent hover:bg-gray-800/40 text-xs font-bold text-gray-300 hover:text-white transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+              
+              <button
+                onClick={() => {
+                  setModalConfig(prev => ({ ...prev, isOpen: false }));
+                  if (modalConfig.onConfirm) modalConfig.onConfirm();
+                }}
+                className={`px-4 py-2 rounded-button text-xs font-bold text-black transition-all cursor-pointer ${
+                  modalConfig.severity === 'error' 
+                    ? 'bg-red-500 hover:bg-red-400' 
+                    : modalConfig.severity === 'warning'
+                    ? 'bg-amber-500 hover:bg-amber-400'
+                    : modalConfig.severity === 'success'
+                    ? 'bg-green-500 hover:bg-green-400'
+                    : 'bg-amber-500 hover:bg-amber-400'
+                }`}
+              >
+                {modalConfig.type === 'confirm' ? 'Confirm' : 'Dismiss'}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
