@@ -46,6 +46,8 @@ export default function TicketDetail() {
         setTicket(t);
         setUpvotes(t.upvote_count);
         setVerificationsCount(t.resolved_signal_count);
+        setHasUpvoted(!!t.has_upvoted);
+        setHasVerifiedResolved(!!t.has_verified);
 
         // Fallback photos list if backend array is empty
         const defaultPhotos = [
@@ -108,6 +110,9 @@ export default function TicketDetail() {
         setVerificationsCount(response.data.data.resolved_signal_count);
       })
       .catch((err) => {
+        if (err.response && err.response.status === 409) {
+          setHasVerifiedResolved(true);
+        }
         console.error('Error marking resolution:', err);
       });
   };
