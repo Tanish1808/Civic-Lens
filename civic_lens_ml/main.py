@@ -219,7 +219,13 @@ async def infer(request: InferenceRequest):
                 severity = "medium"
 
     # Generate 128-element embedding vector (unit normalized)
-    np.random.seed(hash(request.image_url) % (2**32))
+    # Seed using the image's perceptual hash so that identical/similar images
+    # generate matching embeddings for deterministic sandbox duplicate detection.
+    try:
+        seed = int(p_hash, 16) % (2**32)
+    except Exception:
+        seed = hash(request.image_url) % (2**32)
+    np.random.seed(seed)
     embedding = np.random.randn(128)
     embedding /= np.linalg.norm(embedding)
     
