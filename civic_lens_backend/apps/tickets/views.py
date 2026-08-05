@@ -9,7 +9,7 @@ from common.pagination import CursorPagination
 from common.response import error, paginated, success
 from common.throttling import ScopedActionThrottle
 
-from .models import Comment, Ticket, Upvote
+from .models import Comment, Ticket, Upvote, ResolutionSignal
 from .serializers import CommentCreateSerializer
 from .services import SeverityEscalationService
 
@@ -119,7 +119,19 @@ class TicketDetailView(APIView):
         ticket = Ticket.objects(id=ticket_id, is_flagged_spam=False).first()
         if not ticket:
             return error("NOT_FOUND", "Ticket not found.", status=404)
-        return success(ticket.to_detail_dict())
+        
+        detail_data = ticket.to_detail_dict()
+        
+        has_upvoted = False
+        has_verified = False
+        if request.user and request.user.is_authenticated:
+            user_id_str = str(request.user.id)
+            has_upvoted = Upvote.objects(ticket_id=ticket_id, user_id=user_id_str).first() is not None
+            has_verified = ResolutionSignal.objects(ticket_id=ticket_id, user_id=user_id_str).first() is not None
+            
+        detail_data["has_upvoted"] = has_upvoted
+        detail_data["has_verified"] = has_verified
+        return success(detail_data)
 
 
 class UpvoteThrottle(ScopedActionThrottle):
@@ -174,6 +186,11 @@ class MarkResolvedView(APIView):
         ticket = Ticket.objects(id=ticket_id).first()
         if not ticket:
             return error("NOT_FOUND", "Ticket not found.", status=404)
+
+        try:
+            ResolutionSignal(ticket_id=ticket_id, user_id=str(request.user.id)).save()
+        except NotUniqueError:
+            return error("ALREADY_VERIFIED", "You have already verified this resolution.", status=409)
 
         ticket.resolved_signal_count += 1
         ticket.save()
