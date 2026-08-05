@@ -93,40 +93,57 @@ export default function ManualReviewQueue() {
   const handleApproveOverride = (reportId) => {
     const selection = overrides[reportId];
     if (!selection) return;
+    const isRes = reportId.indexOf('ticket:') === 0;
 
-    setProcessingId(reportId);
-    api.patch(`/admin/manual-review-queue/${reportId}/resolve`, {
-      category: selection.category,
-      severity: selection.severity
-    })
-      .then(() => {
-        setProcessingId(null);
-        fetchQueue();
-        showModal({
-          type: 'alert',
-          severity: 'success',
-          title: 'Override Approved',
-          message: `The report was successfully resolved and classified as "${selection.category}" with "${selection.severity}" severity.`
-        });
-      })
-      .catch((err) => {
-        console.error('Failed to resolve manual review entry:', err);
-        showModal({
-          type: 'alert',
-          severity: 'error',
-          title: 'Resolution Failed',
-          message: err.response?.data?.error?.message || 'Failed to submit the override.'
-        });
-        setProcessingId(null);
-      });
+    showModal({
+      type: 'confirm',
+      severity: 'info',
+      title: isRes ? 'Confirm Resolution' : 'Approve Override',
+      message: isRes 
+        ? 'Are you sure you want to confirm this resolution? The ticket status will be updated to Resolved.' 
+        : `Are you sure you want to approve this override? The report will be classified as "${selection.category}" with "${selection.severity}" severity.`,
+      onConfirm: () => {
+        setProcessingId(reportId);
+        api.patch(`/admin/manual-review-queue/${reportId}/resolve`, {
+          category: selection.category,
+          severity: selection.severity
+        })
+          .then(() => {
+            setProcessingId(null);
+            fetchQueue();
+            showModal({
+              type: 'alert',
+              severity: 'success',
+              title: isRes ? 'Resolution Confirmed' : 'Override Approved',
+              message: isRes 
+                ? 'The ticket has been successfully marked as Resolved.' 
+                : `The report was successfully resolved and classified as "${selection.category}" with "${selection.severity}" severity.`
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to resolve manual review entry:', err);
+            showModal({
+              type: 'alert',
+              severity: 'error',
+              title: 'Action Failed',
+              message: err.response?.data?.error?.message || 'Failed to submit the update.'
+            });
+            setProcessingId(null);
+          });
+      }
+    });
   };
 
   const handleDiscardSpam = (reportId) => {
+    const isRes = reportId.indexOf('ticket:') === 0;
+
     showModal({
       type: 'confirm',
       severity: 'warning',
-      title: 'Discard Report',
-      message: 'Are you sure you want to discard this report submission as spam? This action cannot be undone.',
+      title: isRes ? 'Reject Resolution' : 'Discard Report',
+      message: isRes 
+        ? 'Are you sure you want to reject this resolution signal? The ticket will remain active.' 
+        : 'Are you sure you want to discard this report submission as spam? This action cannot be undone.',
       onConfirm: () => {
         setProcessingId(reportId);
         // Resolve entry using dummy "other" category to close the queue entry
@@ -140,8 +157,10 @@ export default function ManualReviewQueue() {
             showModal({
               type: 'alert',
               severity: 'success',
-              title: 'Report Discarded',
-              message: 'The submission was successfully discarded as spam.'
+              title: isRes ? 'Resolution Rejected' : 'Report Discarded',
+              message: isRes 
+                ? 'The resolution signal has been rejected. The ticket remains active.' 
+                : 'The submission was successfully discarded as spam.'
             });
           })
           .catch((err) => {
@@ -195,6 +214,7 @@ export default function ManualReviewQueue() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {reviews.map((r) => {
             const currentOverride = overrides[r.report_id] || { category: 'pothole', severity: 'medium' };
+            const isResSignal = r.report_id.startsWith('ticket:');
 
             return (
               <div key={r.report_id} className="bg-[#151B26]/30 border border-gray-800/80 rounded-card p-6 shadow-2xl backdrop-blur-md space-y-5">
@@ -202,7 +222,11 @@ export default function ManualReviewQueue() {
                 {/* Header: ID & confidence warning */}
                 <div className="flex justify-between items-start border-b border-gray-855 pb-4">
                   <div>
-                    <h3 className="text-sm font-bold text-white">Report #{r.report_id.slice(-6).toUpperCase()}</h3>
+                    <h3 className="text-sm font-bold text-white">
+                      {isResSignal 
+                        ? `Ticket Verification #${r.report_id.split(':', 2)[1].slice(-6).toUpperCase()}` 
+                        : `Report #${r.report_id.slice(-6).toUpperCase()}`}
+                    </h3>
                     <p className="text-[10px] text-red-400 font-bold uppercase mt-1 tracking-wide">Reason: {r.reason.replace('_', ' ')}</p>
                   </div>
                   <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
@@ -241,38 +265,45 @@ export default function ManualReviewQueue() {
                     </div>
 
                     {/* Overrides selectors */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Final Category
-                        </label>
-                        <select 
-                          value={currentOverride.category}
-                          onChange={(e) => handleSelectChange(r.report_id, 'category', e.target.value)}
-                          className="w-full border border-gray-800 rounded-button px-2.5 py-1.5 text-xs bg-[#151B26] text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        >
-                          <option value="pothole">Pothole</option>
-                          <option value="garbage">Garbage</option>
-                          <option value="waterlogging">Waterlogging</option>
-                          <option value="streetlight">Streetlight</option>
-                        </select>
+                    {isResSignal ? (
+                      <div className="bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-card text-xs text-amber-400/90 font-semibold space-y-1.5 leading-relaxed">
+                        <p>Citizens verified that this issue has been resolved.</p>
+                        <p className="text-[10px] text-gray-400 font-normal">Confirming will resolve the ticket. Rejecting will keep it active and clear this verification request.</p>
                       </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                            Final Category
+                          </label>
+                          <select 
+                            value={currentOverride.category}
+                            onChange={(e) => handleSelectChange(r.report_id, 'category', e.target.value)}
+                            className="w-full border border-gray-800 rounded-button px-2.5 py-1.5 text-xs bg-[#151B26] text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          >
+                            <option value="pothole">Pothole</option>
+                            <option value="garbage">Garbage</option>
+                            <option value="waterlogging">Waterlogging</option>
+                            <option value="streetlight">Streetlight</option>
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Final Severity
-                        </label>
-                        <select 
-                          value={currentOverride.severity}
-                          onChange={(e) => handleSelectChange(r.report_id, 'severity', e.target.value)}
-                          className="w-full border border-gray-800 rounded-button px-2.5 py-1.5 text-xs bg-[#151B26] text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        >
-                          <option value="high">High</option>
-                          <option value="medium">Medium</option>
-                          <option value="low">Low</option>
-                        </select>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                            Final Severity
+                          </label>
+                          <select 
+                            value={currentOverride.severity}
+                            onChange={(e) => handleSelectChange(r.report_id, 'severity', e.target.value)}
+                            className="w-full border border-gray-800 rounded-button px-2.5 py-1.5 text-xs bg-[#151B26] text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          >
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -284,7 +315,7 @@ export default function ManualReviewQueue() {
                     className="flex-1 flex justify-center items-center gap-1.5 py-2 px-3 border border-red-500/20 rounded-button bg-red-500/10 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all duration-300 cursor-pointer disabled:opacity-50"
                   >
                     <Ban className="w-3.5 h-3.5" />
-                    <span>Discard as Spam</span>
+                    <span>{isResSignal ? 'Reject Resolution' : 'Discard as Spam'}</span>
                   </button>
                   
                   <button 
@@ -297,7 +328,7 @@ export default function ManualReviewQueue() {
                     ) : (
                       <Check className="w-3.5 h-3.5 font-bold" />
                     )}
-                    <span>Approve Override</span>
+                    <span>{isResSignal ? 'Confirm Resolution' : 'Approve Override'}</span>
                   </button>
                 </div>
 

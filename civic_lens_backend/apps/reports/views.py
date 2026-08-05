@@ -108,11 +108,27 @@ class ManualReviewQueueListView(APIView):
 
         queue_items = []
         for entry in items:
-            report = Report.objects(id=entry.report_id).first()
+            photo_url = None
+            if entry.report_id.startswith("ticket:"):
+                try:
+                    ticket_id = entry.report_id.split(":", 1)[1]
+                    t = Ticket.objects(id=ticket_id).first()
+                    if t and t.photos:
+                        photo_url = t.photos[0].url
+                except Exception:
+                    pass
+            else:
+                try:
+                    r = Report.objects(id=entry.report_id).first()
+                    if r:
+                        photo_url = r.photo_url
+                except Exception:
+                    pass
+
             queue_items.append(
                 {
                     "report_id": entry.report_id,
-                    "photo_url": report.photo_url if report else None,
+                    "photo_url": photo_url,
                     "reason": entry.reason,
                     "created_at": entry.created_at.isoformat() if entry.created_at else None,
                 }
@@ -135,6 +151,23 @@ class ManualReviewQueueResolveView(APIView):
         entry = ManualReviewQueueEntry.objects(report_id=report_id, resolved=False).first()
         if not entry:
             return error("NOT_FOUND", "Queue entry not found or already resolved.", status=404)
+
+        # Handle ticket resolution signal
+        if report_id.startswith("ticket:"):
+            import datetime
+            entry.resolved = True
+            entry.resolved_by = str(request.user.id)
+            entry.save()
+            
+            ticket_id = report_id.split(":", 1)[1]
+            ticket = Ticket.objects(id=ticket_id).first()
+            if ticket and category != "other":
+                ticket.status = "resolved"
+                ticket.resolved_at = datetime.datetime.utcnow()
+                ticket.append_status_history("resolved", changed_by=str(request.user.id), note="Admin manual override approval of community resolution signal.")
+                ticket.save()
+                
+            return success({"report_id": report_id, "message": "Community resolution signal processed."})
 
         report = Report.objects(id=report_id).first()
         if not report:
