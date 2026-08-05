@@ -86,12 +86,28 @@ class Ticket(Document):
         }
 
     def to_detail_dict(self):
+        resolved_photos = []
+        for p in self.photos:
+            uploaded_by_name = "Citizen"
+            if p.uploaded_by:
+                try:
+                    from apps.users.models import User
+                    user = User.objects(id=p.uploaded_by).first()
+                    if user and user.full_name:
+                        uploaded_by_name = user.full_name
+                    elif user:
+                        uploaded_by_name = user.email.split("@")[0]
+                except Exception:
+                    pass
+            resolved_photos.append({
+                "url": p.url,
+                "uploaded_by": uploaded_by_name,
+                "uploaded_at": p.uploaded_at.isoformat() if p.uploaded_at else None
+            })
+
         return {
             **self.to_list_dict(),
-            "photos": [
-                {"url": p.url, "uploaded_by": p.uploaded_by, "uploaded_at": p.uploaded_at.isoformat()}
-                for p in self.photos
-            ],
+            "photos": resolved_photos,
             "status_history": [
                 {
                     "status": h.status,
