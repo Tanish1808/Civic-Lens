@@ -35,3 +35,7 @@ Thumbs.db
 .vscode/
 !.vscode/extensions.json
 .idea/
+
+# Local media uploads
+civic_lens_backend/media/
+
