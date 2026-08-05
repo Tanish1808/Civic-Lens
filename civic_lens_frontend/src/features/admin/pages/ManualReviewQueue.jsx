@@ -29,6 +29,27 @@ export default function ManualReviewQueue() {
   // Override selections mapped by report ID
   const [overrides, setOverrides] = useState({});
 
+  // Custom modal configuration
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: 'alert',
+    title: '',
+    message: '',
+    onConfirm: null,
+    severity: 'info'
+  });
+
+  const showModal = (config) => {
+    setModalConfig({
+      isOpen: true,
+      type: config.type || 'alert',
+      title: config.title || '',
+      message: config.message || '',
+      onConfirm: config.onConfirm || null,
+      severity: config.severity || 'info'
+    });
+  };
+
   const fetchQueue = () => {
     setIsLoading(true);
     setError(null);
@@ -81,32 +102,60 @@ export default function ManualReviewQueue() {
       .then(() => {
         setProcessingId(null);
         fetchQueue();
+        showModal({
+          type: 'alert',
+          severity: 'success',
+          title: 'Override Approved',
+          message: `The report was successfully resolved and classified as "${selection.category}" with "${selection.severity}" severity.`
+        });
       })
       .catch((err) => {
         console.error('Failed to resolve manual review entry:', err);
-        alert(err.response?.data?.error?.message || 'Failed to submit override.');
+        showModal({
+          type: 'alert',
+          severity: 'error',
+          title: 'Resolution Failed',
+          message: err.response?.data?.error?.message || 'Failed to submit the override.'
+        });
         setProcessingId(null);
       });
   };
 
   const handleDiscardSpam = (reportId) => {
-    if (!window.confirm('Are you sure you want to discard this report submission as spam?')) return;
-    
-    setProcessingId(reportId);
-    // Resolve entry using dummy "other" category to close the queue entry
-    api.patch(`/admin/manual-review-queue/${reportId}/resolve`, {
-      category: 'other',
-      severity: 'low'
-    })
-      .then(() => {
-        setProcessingId(null);
-        fetchQueue();
-      })
-      .catch((err) => {
-        console.error('Failed to discard manual review entry:', err);
-        alert('Failed to discard entry.');
-        setProcessingId(null);
-      });
+    showModal({
+      type: 'confirm',
+      severity: 'warning',
+      title: 'Discard Report',
+      message: 'Are you sure you want to discard this report submission as spam? This action cannot be undone.',
+      onConfirm: () => {
+        setProcessingId(reportId);
+        // Resolve entry using dummy "other" category to close the queue entry
+        api.patch(`/admin/manual-review-queue/${reportId}/resolve`, {
+          category: 'other',
+          severity: 'low'
+        })
+          .then(() => {
+            setProcessingId(null);
+            fetchQueue();
+            showModal({
+              type: 'alert',
+              severity: 'success',
+              title: 'Report Discarded',
+              message: 'The submission was successfully discarded as spam.'
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to discard manual review entry:', err);
+            showModal({
+              type: 'alert',
+              severity: 'error',
+              title: 'Discard Failed',
+              message: 'Failed to discard the entry. Please try again.'
+            });
+            setProcessingId(null);
+          });
+      }
+    });
   };
 
   return (
@@ -255,6 +304,72 @@ export default function ManualReviewQueue() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Custom Dialog Modal */}
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-[#151B26] border border-gray-805 rounded-card p-6 w-full max-w-md shadow-2xl space-y-6">
+            
+            <div className="flex items-start gap-4">
+              {modalConfig.severity === 'warning' && (
+                <div className="p-3 rounded-full bg-amber-500/10 text-amber-500 shrink-0">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'error' && (
+                <div className="p-3 rounded-full bg-red-500/10 text-red-500 shrink-0">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'success' && (
+                <div className="p-3 rounded-full bg-green-500/10 text-green-500 shrink-0">
+                  <Check className="w-6 h-6" />
+                </div>
+              )}
+              {modalConfig.severity === 'info' && (
+                <div className="p-3 rounded-full bg-blue-500/10 text-blue-500 shrink-0">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+              )}
+              
+              <div className="space-y-2 flex-1">
+                <h3 className="text-lg font-bold text-white leading-none">{modalConfig.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{modalConfig.message}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-800/80">
+              {modalConfig.type === 'confirm' && (
+                <button
+                  onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2 border border-gray-800 rounded-button bg-transparent hover:bg-gray-800/40 text-xs font-bold text-gray-300 hover:text-white transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+              
+              <button
+                onClick={() => {
+                  setModalConfig(prev => ({ ...prev, isOpen: false }));
+                  if (modalConfig.onConfirm) modalConfig.onConfirm();
+                }}
+                className={`px-4 py-2 rounded-button text-xs font-bold text-black transition-all cursor-pointer ${
+                  modalConfig.severity === 'error' 
+                    ? 'bg-red-500 hover:bg-red-400' 
+                    : modalConfig.severity === 'warning'
+                    ? 'bg-amber-500 hover:bg-amber-400'
+                    : modalConfig.severity === 'success'
+                    ? 'bg-green-500 hover:bg-green-400'
+                    : 'bg-amber-500 hover:bg-amber-400'
+                }`}
+              >
+                {modalConfig.type === 'confirm' ? 'Confirm' : 'Dismiss'}
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 
