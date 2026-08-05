@@ -244,9 +244,13 @@ class LeaderboardView(APIView):
         return success(data)
 
 
+class SupportRequestThrottle(ScopedActionThrottle):
+    def __init__(self):
+        super().__init__("support_request")
+
+
 class SupportRequestCreateView(APIView):
-    throttle_classes = [ScopedActionThrottle]
-    throttle_scope = "support_request"
+    throttle_classes = [SupportRequestThrottle]
 
     def post(self, request):
         serializer = SupportRequestSerializer(data=request.data)
