@@ -27,6 +27,7 @@ export default function AdminAuditLog() {
   }, []);
 
   const getActionBadgeClass = (action) => {
+    if (action === 'unflag_spam') return 'bg-green-500/10 text-green-400 border border-green-500/20';
     if (action.includes('status')) return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
     if (action.includes('override') || action.includes('category')) return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
     if (action.includes('spam')) return 'bg-red-500/10 text-red-400 border border-red-500/20';
@@ -47,6 +48,9 @@ export default function AdminAuditLog() {
     }
     if (log.action_type === 'flag_spam') {
       return `Flagged Ticket ${ticketRef} as malicious spam activity. Removed from active maps.`;
+    }
+    if (log.action_type === 'unflag_spam') {
+      return `Restored Ticket ${ticketRef} from spam-flagged list. Returned back to active dashboards.`;
     }
     
     // General fallback summary
