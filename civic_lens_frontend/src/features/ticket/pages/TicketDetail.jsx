@@ -235,11 +235,11 @@ export default function TicketDetail() {
             </div>
 
             {/* Custom Carousel */}
-            <div className="relative aspect-video w-full bg-gray-50 rounded-card overflow-hidden border border-gray-100 group shadow-inner">
+            <div className="relative aspect-video w-full bg-gray-950 rounded-card overflow-hidden border border-gray-100 group shadow-inner">
               <img 
                 src={ticketPhotos[activePhotoIdx]?.url} 
                 alt="Civic Issue Upload" 
-                className="w-full h-full object-cover transition-all duration-500" 
+                className="w-full h-full object-contain transition-all duration-500" 
               />
               
               {/* Overlay Metadata */}
