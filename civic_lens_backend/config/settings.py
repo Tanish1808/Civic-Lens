@@ -103,6 +103,7 @@ REST_FRAMEWORK = {
         "auth_signup": "3/min",
         "report_submit": "10/hour",
         "upvote": "20/hour",
+        "support_request": "10/hour",
         "authenticated": "100/min",
         "anon": "60/min",
     },
