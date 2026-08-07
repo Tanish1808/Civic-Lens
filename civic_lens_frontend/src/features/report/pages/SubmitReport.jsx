@@ -203,54 +203,97 @@ export default function SubmitReport() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Custom Drag-and-Drop / Camera Area */}
+            {/* ── Glassmorphic AI Drop Zone ── */}
             <div>
-              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
+              <label className="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
                 Upload Photo <span className="text-red-500">*</span>
               </label>
 
               {!filePreview ? (
-                <div 
+                <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-card transition-all duration-300 cursor-pointer relative group ${
-                    isDragging
-                      ? 'border-primary bg-primary/10 scale-[1.01]'
-                      : 'border-gray-200 hover:border-primary hover:bg-primary/5'
+                  className={`relative overflow-hidden rounded-2xl transition-all duration-300 cursor-pointer group ${
+                    isDragging ? 'scale-[1.01]' : ''
                   }`}
+                  style={{
+                    background: isDragging
+                      ? 'rgba(99, 102, 241, 0.08)'
+                      : 'rgba(255,255,255,0.6)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: isDragging
+                      ? '2px dashed rgba(99,102,241,0.5)'
+                      : '2px dashed rgba(203,213,225,0.7)',
+                    boxShadow: isDragging
+                      ? '0 0 30px rgba(99,102,241,0.12), inset 0 1px 1px rgba(255,255,255,0.8)'
+                      : 'inset 0 1px 1px rgba(255,255,255,0.8)'
+                  }}
                 >
-                  <div className="space-y-2 text-center">
-                    <div className="mx-auto h-12 w-12 text-gray-400 group-hover:text-primary group-hover:scale-105 transition-all duration-300 flex items-center justify-center bg-gray-50 rounded-full">
-                      <Camera className="w-6 h-6" />
+                  {/* Shimmer overlay */}
+                  <div className="absolute inset-0 dropzone-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                  {/* Corner bracket accents */}
+                  <div className={`absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 rounded-tl-lg transition-all duration-300 ${isDragging ? 'border-indigo-400 opacity-100' : 'border-gray-300 opacity-50 group-hover:opacity-100 group-hover:border-primary'}`} />
+                  <div className={`absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 rounded-tr-lg transition-all duration-300 ${isDragging ? 'border-indigo-400 opacity-100' : 'border-gray-300 opacity-50 group-hover:opacity-100 group-hover:border-primary'}`} />
+                  <div className={`absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 rounded-bl-lg transition-all duration-300 ${isDragging ? 'border-indigo-400 opacity-100' : 'border-gray-300 opacity-50 group-hover:opacity-100 group-hover:border-primary'}`} />
+                  <div className={`absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 rounded-br-lg transition-all duration-300 ${isDragging ? 'border-indigo-400 opacity-100' : 'border-gray-300 opacity-50 group-hover:opacity-100 group-hover:border-primary'}`} />
+
+                  {/* Scan line (visible when dragging) */}
+                  {isDragging && (
+                    <div className="absolute inset-x-0 h-px ai-scan-line ai-scan-glow pointer-events-none z-10"
+                      style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.9), transparent)' }}
+                    />
+                  )}
+
+                  <div className="flex flex-col items-center justify-center gap-3 py-10 px-6 text-center">
+                    {/* Animated icon ring */}
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      isDragging
+                        ? 'bg-indigo-100 dark:bg-indigo-950/40 scale-110'
+                        : 'bg-gray-100/80 dark:bg-gray-800/60 group-hover:scale-105 group-hover:bg-primary/10'
+                    }`}>
+                      <Camera className={`w-6 h-6 transition-colors duration-300 ${isDragging ? 'text-indigo-500' : 'text-gray-400 group-hover:text-primary'}`} />
                     </div>
-                    <div className="flex text-sm text-text-secondary justify-center">
-                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white/0 rounded-md font-bold text-primary hover:text-primary/90 focus-within:outline-none">
-                        <span>Capture or Upload</span>
-                        <input 
-                          id="file-upload" 
-                          name="file-upload" 
-                          type="file" 
-                          className="sr-only" 
-                          accept="image/*" 
-                          onChange={handleFileChange}
-                        />
-                      </label>
-                      <p className="pl-1">photo</p>
+
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        <label htmlFor="file-upload" className="cursor-pointer font-black text-primary dark:text-amber-400 hover:underline">
+                          Capture or Upload
+                          <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                        {' '}a photo
+                      </div>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Drag & drop · PNG, JPEG up to 8MB</p>
+                      <p className="text-[10px] text-primary/70 dark:text-amber-500/60 mt-1.5 font-semibold tracking-wide uppercase">⚡ AI will auto-classify your report</p>
                     </div>
-                    <p className="text-xs text-text-secondary">PNG, JPEG up to 8MB</p>
                   </div>
                 </div>
               ) : (
-                <div className="relative aspect-video w-full rounded-card overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shadow-inner">
-                  <img src={filePreview} alt="Preview" className="h-full object-cover" />
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-gray-200/60 dark:border-gray-700/40 bg-gray-50 shadow-xl group">
+                  <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
+                  {/* Glass overlay on hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
                   <button
                     type="button"
                     onClick={removeFile}
-                    className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white backdrop-blur-sm transition-colors duration-300"
+                    className="absolute top-3 right-3 p-1.5 rounded-full text-white transition-all duration-200 hover:scale-110"
+                    style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)' }}
                   >
                     <X className="w-4 h-4" />
                   </button>
+                  {/* Scan line on image preview */}
+                  <div className="absolute inset-x-0 h-px ai-scan-line pointer-events-none opacity-60"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.8), transparent)' }}
+                  />
+                  {/* AI ready badge */}
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: '#fbbf24' }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    AI Ready
+                  </div>
                 </div>
               )}
             </div>
@@ -341,94 +384,127 @@ export default function SubmitReport() {
         </div>
       )}
 
-      {/* 2. Interactive AI Processing Simulator Screen */}
+      {/* ── Glassmorphic AI Processing Simulator ── */}
       {isProcessing && (
-        <div className="bg-[#0B0F19] text-white rounded-card shadow-2xl border border-gray-800 p-6 md:p-8 space-y-8 max-w-xl mx-auto transition-all duration-500 animate-in zoom-in-95">
-          {/* Simulator Header */}
-          <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h2 className="text-md font-bold tracking-tight text-amber-500 uppercase tracking-widest text-xs">AI Inference Simulator</h2>
-            <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] font-bold uppercase tracking-widest animate-pulse">
-              Live Pipeline
+        <div
+          className="rounded-2xl p-6 md:p-8 space-y-7 max-w-xl mx-auto"
+          style={{
+            background: 'rgba(11,15,25,0.92)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(245,158,11,0.15)',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)'
+          }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center border-b pb-4" style={{ borderColor: 'rgba(245,158,11,0.15)' }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <h2 className="text-xs font-black text-amber-400 uppercase tracking-widest">AI Inference Pipeline</h2>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-400"
+              style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)' }}
+            >
+              ⚡ Live
             </span>
           </div>
 
-          {/* Running steps checklist */}
-          <div className="space-y-6">
-            
+          {/* Image with scan overlay */}
+          {filePreview && (
+            <div className="relative w-full h-32 rounded-xl overflow-hidden">
+              <img src={filePreview} alt="Scanning" className="w-full h-full object-cover opacity-70" />
+              {/* Dark glass overlay */}
+              <div className="absolute inset-0" style={{ background: 'rgba(11,15,25,0.5)' }} />
+              {/* Pulsing laser scan line */}
+              <div
+                className="absolute inset-x-0 h-[2px] ai-scan-line ai-scan-glow pointer-events-none z-10"
+                style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(245,158,11,1) 30%, rgba(251,191,36,1) 50%, rgba(245,158,11,1) 70%, transparent 100%)' }}
+              />
+              {/* Scan grid lines */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: 'linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px)',
+                backgroundSize: '20px 20px'
+              }} />
+              {/* Corner brackets */}
+              <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-amber-400 opacity-80" />
+              <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-amber-400 opacity-80" />
+              <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-amber-400 opacity-80" />
+              <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-amber-400 opacity-80" />
+              {/* Status label */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-black text-amber-300 uppercase tracking-widest"
+                style={{ background: 'rgba(11,15,25,0.7)', backdropFilter: 'blur(8px)' }}
+              >
+                {processingStep === 1 ? 'Uploading...' : processingStep === 2 ? 'Classifying...' : processingStep === 3 ? 'Scanning Geo...' : '✓ Complete'}
+              </div>
+            </div>
+          )}
+
+          {/* Steps */}
+          <div className="space-y-5">
+
             {/* Step 1: Upload */}
             <div className="flex items-start gap-4">
-              <span className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                processingStep > 1 
-                  ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                  : 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-spin'
-              }`}>
-                {processingStep > 1 ? <CheckCircle2 className="w-4 h-4 animate-in zoom-in" /> : <Loader2 className="w-4 h-4" />}
-              </span>
-              <div className="flex-1 space-y-1.5">
-                <h3 className="text-sm font-semibold">1. Uploading image to Cloudinary CDN</h3>
+              <div className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                processingStep > 1
+                  ? 'bg-green-500/15 border border-green-500/30'
+                  : 'border border-amber-500/30 bg-amber-500/10'
+              }`} style={processingStep === 1 ? { animation: 'spin 1s linear infinite' } : {}}>
+                {processingStep > 1 ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Loader2 className="w-4 h-4 text-amber-400" />}
+              </div>
+              <div className="flex-1 space-y-1.5 pt-0.5">
+                <h3 className="text-sm font-bold text-white">1. Uploading to Cloudinary CDN</h3>
                 {processingStep === 1 && (
-                  <div className="w-full bg-gray-800 rounded-full h-1.5">
-                    <div className="bg-amber-500 h-1.5 rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }}></div>
+                  <div className="w-full rounded-full h-1" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <div
+                      className="h-1 rounded-full transition-all duration-200"
+                      style={{
+                        width: `${uploadProgress}%`,
+                        background: 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                      }}
+                    />
                   </div>
                 )}
-                {processingStep > 1 && <p className="text-[11px] text-gray-500">Image successfully hosted on Cloudinary.</p>}
+                {processingStep > 1 && <p className="text-[11px] text-gray-500">✓ Image hosted on Cloudinary.</p>}
               </div>
             </div>
 
             {/* Step 2: Classification */}
             <div className="flex items-start gap-4">
-              <span className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                processingStep > 2 
-                  ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+              <div className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                processingStep > 2
+                  ? 'bg-green-500/15 border border-green-500/30'
                   : processingStep === 2
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse'
-                  : 'bg-gray-800 text-gray-600 border border-gray-800'
-              }`}>
-                {processingStep > 2 ? (
-                  <CheckCircle2 className="w-4 h-4 animate-in zoom-in" />
-                ) : processingStep === 2 ? (
-                  <Compass className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Compass className="w-4 h-4" />
-                )}
-              </span>
-              <div className="flex-1 space-y-1">
-                <h3 className="text-sm font-semibold">2. Running Computer Vision Inference</h3>
-                {processingStep === 2 && <p className="text-[11px] text-amber-500/80 animate-pulse">Analyzing category & severity flags...</p>}
-                {processingStep > 2 && (
-                  <p className="text-[11px] text-gray-500 font-semibold">
-                    Category: <span className="text-white capitalize">{selectedCategory || 'Classified automatically'}</span>
-                  </p>
-                )}
+                  ? 'bg-amber-500/10 border border-amber-500/30'
+                  : 'border border-gray-700 bg-gray-800/60'
+              }`} style={processingStep === 2 ? { animation: 'pulse 1s ease-in-out infinite' } : {}}>
+                {processingStep > 2 ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Compass className={`w-4 h-4 ${processingStep === 2 ? 'text-amber-400 animate-spin' : 'text-gray-600'}`} />}
+              </div>
+              <div className="flex-1 space-y-1 pt-0.5">
+                <h3 className={`text-sm font-bold ${processingStep >= 2 ? 'text-white' : 'text-gray-600'}`}>2. Computer Vision Inference</h3>
+                {processingStep === 2 && <p className="text-[11px] text-amber-400/80 animate-pulse">Analyzing category & severity flags...</p>}
+                {processingStep > 2 && <p className="text-[11px] text-gray-500">Category: <span className="text-white capitalize">{selectedCategory || 'Auto-classified'}</span></p>}
               </div>
             </div>
 
-            {/* Step 3: Duplicate Merge */}
+            {/* Step 3: Geo Duplicate */}
             <div className="flex items-start gap-4">
-              <span className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                processingStep > 3 
-                  ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+              <div className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                processingStep > 3
+                  ? 'bg-green-500/15 border border-green-500/30'
                   : processingStep === 3
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse animate-bounce'
-                  : 'bg-gray-800 text-gray-600 border border-gray-800'
+                  ? 'bg-amber-500/10 border border-amber-500/30'
+                  : 'border border-gray-700 bg-gray-800/60'
               }`}>
-                {processingStep > 3 ? (
-                  <CheckCircle2 className="w-4 h-4 animate-in zoom-in" />
-                ) : processingStep === 3 ? (
-                  <Layers className="w-4 h-4" />
-                ) : (
-                  <Layers className="w-4 h-4" />
-                )}
-              </span>
-              <div className="flex-1 space-y-1">
-                <h3 className="text-sm font-semibold">3. Scanning Geospatial Duplicate Loop</h3>
-                {processingStep === 3 && <p className="text-[11px] text-amber-500/80 animate-pulse">Running MongoDB 2dsphere check...</p>}
+                {processingStep > 3 ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Layers className={`w-4 h-4 ${processingStep === 3 ? 'text-amber-400 animate-bounce' : 'text-gray-600'}`} />}
+              </div>
+              <div className="flex-1 space-y-1 pt-0.5">
+                <h3 className={`text-sm font-bold ${processingStep >= 3 ? 'text-white' : 'text-gray-600'}`}>3. Geospatial Duplicate Scan</h3>
+                {processingStep === 3 && <p className="text-[11px] text-amber-400/80 animate-pulse">Running MongoDB 2dsphere check...</p>}
                 {processingStep > 3 && (
                   <p className="text-[11px] text-gray-500">
-                    {reportResult?.status === 'merged' 
-                      ? 'Geospatial duplicate found! Merged into master ticket.'
-                      : 'No duplicates found. New ticket registered successfully.'
-                    }
+                    {reportResult?.status === 'merged'
+                      ? '⚠ Duplicate detected — merged into master ticket.'
+                      : '✓ No duplicates. New ticket registered.'}
                   </p>
                 )}
               </div>
@@ -436,31 +512,40 @@ export default function SubmitReport() {
 
           </div>
 
-          {/* 4. Done success card */}
+          {/* Success card */}
           {processingStep === 4 && (
-            <div className="bg-gray-800/30 border border-gray-800/80 p-5 rounded-card space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div
+              className="p-5 rounded-xl space-y-4"
+              style={{
+                background: 'rgba(34,197,94,0.06)',
+                border: '1px solid rgba(34,197,94,0.2)',
+                boxShadow: '0 0 20px rgba(34,197,94,0.06)'
+              }}
+            >
               <div className="flex gap-2.5 text-xs text-green-400 items-start leading-relaxed font-semibold">
                 <ShieldCheck className="w-5 h-5 flex-shrink-0" />
                 <p>
                   {reportResult?.status === 'manual_review'
-                    ? 'Report logged successfully! Because ML service is offline, your ticket is routed to the Manual Review Queue for classification.'
+                    ? 'Report logged! ML offline — routed to Manual Review Queue.'
                     : reportResult?.status === 'merged'
-                    ? 'Duplicate check matched! Your report has been merged with an active ticket, raising its resolution priority.'
-                    : 'Report registered successfully! A new ticket has been opened for investigation.'
+                    ? 'Duplicate matched! Merged with active ticket — priority raised.'
+                    : 'Report registered! New ticket opened for investigation.'
                   }
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={resetForm}
-                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-button text-xs font-semibold transition-colors text-center cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-gray-300 transition-all duration-200 hover:text-white cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                 >
                   Report Another
                 </button>
                 {reportResult?.ticket_id && (
                   <Link
                     to={`/ticket/${reportResult.ticket_id}`}
-                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-[#0B0F19] rounded-button text-xs font-bold transition-all duration-300 hover:scale-[1.02] active:scale-97 text-center cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl text-xs font-black text-center transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                    style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', color: '#0B0F19' }}
                   >
                     View Ticket
                   </Link>
