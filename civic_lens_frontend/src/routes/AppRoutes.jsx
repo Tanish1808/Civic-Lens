@@ -44,7 +44,7 @@ function ProtectedRoute({ children }) {
 // Layout for Citizen views
 function PublicLayout() {
   return (
-    <div className="flex flex-col min-h-screen bg-bg-light">
+    <div className="flex flex-col min-h-screen bg-bg-light dark:bg-[#0E131F] text-text-primary dark:text-gray-200 transition-colors duration-300">
       <Navbar />
       <main className="flex-1">
         <Outlet />
