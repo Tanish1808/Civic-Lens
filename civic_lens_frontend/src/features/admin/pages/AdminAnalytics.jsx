@@ -136,8 +136,17 @@ export default function AdminAnalytics() {
                 <CartesianGrid stroke="#1F2937" strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(11,15,25,0.95)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(12px)',
+                    padding: '10px 14px',
+                  }}
+                  labelStyle={{ color: '#ffffff', fontWeight: 700, fontSize: '11px', marginBottom: '4px' }}
+                  itemStyle={{ color: '#d1d5db', fontSize: '12px', fontWeight: 600 }}
                 />
                 <Area type="monotone" dataKey="reported" stroke="#1E5F8C" fillOpacity={1} fill="url(#colorReported)" strokeWidth={2} />
                 <Area type="monotone" dataKey="resolved" stroke="#4CAF7D" fillOpacity={1} fill="url(#colorResolved)" strokeWidth={2} />
@@ -168,8 +177,17 @@ export default function AdminAnalytics() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(11,15,25,0.95)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(12px)',
+                    padding: '10px 14px',
+                  }}
+                  labelStyle={{ color: '#ffffff', fontWeight: 700, fontSize: '11px', marginBottom: '4px' }}
+                  itemStyle={{ color: '#d1d5db', fontSize: '12px', fontWeight: 600 }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -199,9 +217,18 @@ export default function AdminAnalytics() {
               <CartesianGrid stroke="#1F2937" strokeDasharray="3 3" />
               <XAxis dataKey="name" stroke="#9CA3AF" />
               <YAxis stroke="#9CA3AF" allowDecimals={false} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#151B26', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFF' }}
-                cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(11,15,25,0.95)',
+                  border: '1px solid rgba(245,158,11,0.25)',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  backdropFilter: 'blur(12px)',
+                  padding: '10px 14px',
+                }}
+                labelStyle={{ color: '#ffffff', fontWeight: 700, fontSize: '11px', marginBottom: '4px' }}
+                itemStyle={{ color: '#d1d5db', fontSize: '12px', fontWeight: 600 }}
+                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {categoryData.map((entry, index) => (
