@@ -7,7 +7,7 @@
 
 @layer base {
   body {
-    @apply bg-bg-light text-text-primary font-sans antialiased;
+    @apply bg-bg-light dark:bg-[#0E131F] text-text-primary dark:text-gray-100 font-sans antialiased transition-colors duration-300;
   }
 }
 
