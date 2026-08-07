@@ -5,6 +5,7 @@ from mongoengine import (
     DateTimeField,
     Document,
     EmbeddedDocument,
+    EmbeddedDocumentField,
     EmbeddedDocumentListField,
     IntField,
     PointField,
@@ -45,6 +46,7 @@ class Ticket(Document):
     created_at = DateTimeField(default=datetime.datetime.utcnow)
     updated_at = DateTimeField(default=datetime.datetime.utcnow)
     resolved_at = DateTimeField(null=True)
+    resolved_photo = EmbeddedDocumentField(Photo, null=True)
 
     meta = {
         "collection": "tickets",
@@ -120,6 +122,11 @@ class Ticket(Document):
             "is_ml_overridden": self.is_ml_overridden,
             "resolved_signal_count": self.resolved_signal_count,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            "resolved_photo": {
+                "url": self.resolved_photo.url,
+                "uploaded_by": self.resolved_photo.uploaded_by,
+                "uploaded_at": self.resolved_photo.uploaded_at.isoformat() if self.resolved_photo.uploaded_at else None,
+            } if self.resolved_photo else None,
         }
 
     def to_admin_dict(self):
