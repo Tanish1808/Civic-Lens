@@ -81,6 +81,7 @@ class Ticket(Document):
             "category": self.category,
             "severity": self.severity,
             "location": self.location,
+            "zone_id": self.zone_id,
             "status": self.status,
             "report_count": self.report_count,
             "upvote_count": self.upvote_count,
