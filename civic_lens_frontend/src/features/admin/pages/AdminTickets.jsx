@@ -43,6 +43,7 @@ export default function AdminTickets() {
   const [editSeverity, setEditSeverity] = useState('');
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [resolvedImageFile, setResolvedImageFile] = useState(null);
 
   // Active Tab: 'active' | 'flagged'
   const [activeTab, setActiveTab] = useState('active');
@@ -113,6 +114,7 @@ export default function AdminTickets() {
     setEditCategory(t.category);
     setEditSeverity(t.severity);
     setEditNote('');
+    setResolvedImageFile(null);
   };
 
   const handleSaveEdit = (e) => {
@@ -120,14 +122,36 @@ export default function AdminTickets() {
     if (!editingTicket) return;
     setIsSavingEdit(true);
 
+    if (editStatus === 'resolved' && !resolvedImageFile && !editingTicket.resolved_photo) {
+      showModal({
+        type: 'alert',
+        severity: 'warning',
+        title: 'Verification Photo Required',
+        message: 'A verification photo is required to mark the ticket as resolved.'
+      });
+      setIsSavingEdit(false);
+      return;
+    }
+
     const promises = [];
 
-    // 1. If status changed, PATCH status
-    if (editStatus !== editingTicket.status) {
+    // 1. If status changed OR resolved image is added/updated
+    const isStatusChanged = editStatus !== editingTicket.status;
+    const isResolvedImageAdded = editStatus === 'resolved' && resolvedImageFile;
+
+    if (isStatusChanged || isResolvedImageAdded) {
+      const formData = new FormData();
+      formData.append('status', editStatus);
+      formData.append('note', editNote || 'Admin manual status override.');
+      if (resolvedImageFile) {
+        formData.append('resolved_image', resolvedImageFile);
+      }
+
       promises.push(
-        api.patch(`/admin/tickets/${editingTicket.id}/status`, {
-          status: editStatus,
-          note: editNote || 'Admin manual status override.'
+        api.patch(`/admin/tickets/${editingTicket.id}/status`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         })
       );
     }
@@ -508,6 +532,26 @@ export default function AdminTickets() {
                 </div>
               </div>
 
+              {editStatus === 'resolved' && (
+                <div className="space-y-1.5 border border-dashed border-gray-800 p-3 rounded-card bg-[#0E131F]/40">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Verification Photo <span className="text-amber-500">*</span>
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setResolvedImageFile(e.target.files?.[0] || null)}
+                    className="w-full text-xs text-gray-400 file:mr-2.5 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20 file:cursor-pointer"
+                    required={!editingTicket.resolved_photo}
+                  />
+                  <p className="text-[9px] text-gray-500 leading-tight">
+                    {!editingTicket.resolved_photo 
+                      ? "A photo showing the fixed location is required to resolve this ticket."
+                      : "A verification photo is already uploaded, but you can select a new one to replace it."}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Audit Log Action Note</label>
                 <textarea 
@@ -581,6 +625,30 @@ export default function AdminTickets() {
                       </span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Resolution Verification Photo */}
+            {selectedViewTicket.resolved_photo && (
+              <div className="space-y-1.5 border border-green-500/20 p-3 rounded-card bg-green-500/5">
+                <p className="text-[10px] text-green-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Resolution Verification Proof</span>
+                </p>
+                <div className="relative rounded-card overflow-hidden border border-gray-850 aspect-video bg-[#0E131F] max-w-sm mx-auto">
+                  <ImageWithFallback 
+                    src={selectedViewTicket.resolved_photo.url ? (
+                      (selectedViewTicket.resolved_photo.url.startsWith('http://') || selectedViewTicket.resolved_photo.url.startsWith('https://') || selectedViewTicket.resolved_photo.url.startsWith('data:'))
+                        ? selectedViewTicket.resolved_photo.url 
+                        : `http://localhost:8000${selectedViewTicket.resolved_photo.url.startsWith('/') ? '' : '/'}${selectedViewTicket.resolved_photo.url}`
+                    ) : ''} 
+                    alt="Resolution proof" 
+                    className="w-full h-full object-contain" 
+                  />
+                  <span className="absolute bottom-1 right-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-gray-300">
+                    Uploaded by Admin
+                  </span>
                 </div>
               </div>
             )}
