@@ -479,6 +479,16 @@ export default function TicketDetail() {
               </span>
             </div>
 
+            <div className="flex justify-between items-center text-xs border-t border-gray-55/40 pt-3">
+              <span className="text-text-secondary flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-primary" />
+                <span>Municipal Ward</span>
+              </span>
+              <span className="font-bold text-text-primary">
+                {ticket.zone_id || 'Ahmedabad Grid'}
+              </span>
+            </div>
+
             <div className="flex justify-between items-center text-xs border-t border-gray-100 pt-3">
               <span className="text-text-secondary flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
