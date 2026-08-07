@@ -134,31 +134,74 @@ class ResolutionTrendView(APIView):
         date_from = request.query_params.get("date_from")
         date_to = request.query_params.get("date_to")
         queryset = Ticket.objects(is_flagged_spam=False)
-        if date_from:
-            queryset = queryset.filter(created_at__gte=datetime.datetime.fromisoformat(date_from))
+
+        # Get all tickets to calculate min/max dates
+        tickets = list(queryset)
+        if not tickets:
+            return success({"trend": []})
+
+        # Calculate start and end dates
         if date_to:
-            queryset = queryset.filter(created_at__lte=datetime.datetime.fromisoformat(date_to))
+            end_date = datetime.datetime.fromisoformat(date_to).date()
+        else:
+            end_date = datetime.datetime.utcnow().date()
 
-        periods = {}
-        for t in queryset:
-            if not t.created_at:
-                continue
-            
+        if date_from:
+            start_date = datetime.datetime.fromisoformat(date_from).date()
+        else:
+            # Sliding window of 7 intervals
             if interval == "day":
-                period = t.created_at.strftime("%Y-%m-%d")
+                start_date = end_date - datetime.timedelta(days=6)
             elif interval == "week":
-                period = t.created_at.strftime("%Y-%U")
+                start_date = end_date - datetime.timedelta(weeks=6)
             else:
-                period = t.created_at.strftime("%Y-%m")
+                # approx 6 months ago (7 months total)
+                start_date = end_date - datetime.timedelta(days=180)
 
-            if period not in periods:
-                periods[period] = {"created": 0, "resolved": 0, "resolution_times": []}
+        # Generate all periods in range to avoid gaps
+        periods = {}
+        curr = start_date
+        while curr <= end_date:
+            if interval == "day":
+                p = curr.strftime("%Y-%m-%d")
+            elif interval == "week":
+                p = curr.strftime("%Y-%U")
+            else:
+                p = curr.strftime("%Y-%m")
+            
+            if p not in periods:
+                periods[p] = {"created": 0, "resolved": 0, "resolution_times": []}
+            
+            curr += datetime.timedelta(days=1)
 
-            periods[period]["created"] += 1
+        # Count events
+        for t in tickets:
+            # 1. Created event
+            if t.created_at:
+                if interval == "day":
+                    p_created = t.created_at.strftime("%Y-%m-%d")
+                elif interval == "week":
+                    p_created = t.created_at.strftime("%Y-%U")
+                else:
+                    p_created = t.created_at.strftime("%Y-%m")
+                
+                # Check if within filtered range (or generated periods)
+                if p_created in periods:
+                    periods[p_created]["created"] += 1
+
+            # 2. Resolved event
             if t.status == "resolved" and t.resolved_at:
-                periods[period]["resolved"] += 1
-                days = (t.resolved_at - t.created_at).total_seconds() / 86400.0
-                periods[period]["resolution_times"].append(days)
+                if interval == "day":
+                    p_resolved = t.resolved_at.strftime("%Y-%m-%d")
+                elif interval == "week":
+                    p_resolved = t.resolved_at.strftime("%Y-%U")
+                else:
+                    p_resolved = t.resolved_at.strftime("%Y-%m")
+                
+                if p_resolved in periods:
+                    periods[p_resolved]["resolved"] += 1
+                    days = (t.resolved_at - t.created_at).total_seconds() / 86400.0
+                    periods[p_resolved]["resolution_times"].append(days)
 
         trend = []
         for period in sorted(periods.keys()):
