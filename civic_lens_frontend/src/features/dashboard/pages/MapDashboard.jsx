@@ -198,108 +198,128 @@ export default function MapDashboard() {
   return (
     <div className="relative flex h-[calc(100vh-64px)] w-full overflow-hidden bg-bg-light dark:bg-[#0E131F]">
       
-      {/* Side Filter Bar */}
+      {/* ── Glassmorphic Side Filter Panel ── */}
       <div
-        className={`bg-white dark:bg-[#151B26] border-r border-gray-200/80 dark:border-gray-800 z-10 flex flex-col justify-between transition-all duration-300 shadow-xl ${
-          showFilters ? 'w-80' : 'w-0 overflow-hidden border-none shadow-none'
+        className={`relative z-10 flex flex-col justify-between transition-all duration-300 ${
+          showFilters ? 'w-80' : 'w-0 overflow-hidden'
         }`}
       >
-        <div className="p-6 overflow-y-auto space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-text-primary dark:text-white">Filter Reports</h2>
+        {/* Glass backdrop */}
+        <div className={`absolute inset-0 bg-white/80 dark:bg-[#0E131F]/80 backdrop-blur-xl border-r border-white/50 dark:border-gray-700/40 shadow-2xl shadow-black/5 dark:shadow-black/30 transition-all duration-300 ${showFilters ? 'opacity-100' : 'opacity-0'}`} />
+
+        <div className="relative z-10 p-6 overflow-y-auto space-y-5 h-full">
+
+          {/* Panel Header */}
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200/60 dark:border-gray-700/40">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-primary to-primary/60 dark:from-amber-400 dark:to-amber-600" />
+              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Filter Reports</h2>
+            </div>
             <button 
               onClick={handleResetFilters}
-              className="text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white p-1 hover:bg-gray-100 dark:hover:bg-gray-800/40 rounded transition-colors border-0 bg-transparent cursor-pointer"
+              className="text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-amber-400 p-1.5 hover:bg-primary/8 dark:hover:bg-amber-500/10 rounded-lg transition-all duration-200 border-0 bg-transparent cursor-pointer group"
               title="Reset Filters"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
             </button>
           </div>
  
-          {/* Search bar */}
+          {/* Glassmorphic Search bar */}
           <div className="relative">
             <input
               type="text"
               placeholder="Search reports or areas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-button bg-gray-50/50 dark:bg-gray-850 text-text-primary dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 dark:focus:ring-amber-500/10 focus:border-primary dark:focus:border-amber-500 transition-all duration-300"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/60 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/70 dark:border-gray-700/50 text-gray-900 dark:text-gray-200 text-sm placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/20 focus:border-primary/50 dark:focus:border-amber-500/50 transition-all duration-300 shadow-sm"
             />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+            <Search className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 absolute left-3 top-3" />
           </div>
  
-          {/* Category Filters */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary dark:text-gray-400 uppercase tracking-wider">Issue Category</h3>
-            <div className="space-y-2">
+          {/* Category Filters — glass pill group */}
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Issue Category</h3>
+            <div className="bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl border border-gray-100/80 dark:border-gray-800/60 p-3 space-y-1.5 shadow-inner">
               {Object.entries(CATEGORY_MAP).map(([label, value]) => (
-                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer hover:text-black dark:hover:text-white">
+                <label key={label} className="flex items-center gap-2.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:text-primary dark:hover:text-amber-400 transition-colors duration-150 py-0.5 px-1 rounded-lg hover:bg-primary/5 dark:hover:bg-amber-500/5">
                   <input 
                     type="checkbox" 
                     checked={selectedCategories[value]} 
                     onChange={() => setSelectedCategories({ ...selectedCategories, [value]: !selectedCategories[value] })}
-                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
+                    className="rounded border-gray-300 dark:border-gray-600 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 bg-white dark:bg-gray-800 w-3.5 h-3.5 cursor-pointer" 
                   />
-                  <span className="font-medium">{label}</span>
+                  <span className="font-semibold text-xs">{label}</span>
                 </label>
               ))}
             </div>
           </div>
  
-          {/* Severity Filters */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Severity Level</h3>            <div className="space-y-2">
-              {['high', 'medium', 'low'].map((sev) => (
-                <label key={sev} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer capitalize hover:text-black dark:hover:text-white">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedSeverity[sev]} 
-                    onChange={() => setSelectedSeverity({ ...selectedSeverity, [sev]: !selectedSeverity[sev] })}
-                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
-                  />
-                  <span className="font-semibold">{sev} Priority</span>
-                </label>
-              ))}
+          {/* Severity Filters — glass pill group */}
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Severity Level</h3>
+            <div className="bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl border border-gray-100/80 dark:border-gray-800/60 p-3 space-y-1.5 shadow-inner">
+              {['high', 'medium', 'low'].map((sev) => {
+                const dot = sev === 'high' ? 'bg-red-500' : sev === 'medium' ? 'bg-amber-400' : 'bg-green-500';
+                return (
+                  <label key={sev} className="flex items-center gap-2.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:text-primary dark:hover:text-amber-400 transition-colors duration-150 py-0.5 px-1 rounded-lg hover:bg-primary/5 dark:hover:bg-amber-500/5">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedSeverity[sev]} 
+                      onChange={() => setSelectedSeverity({ ...selectedSeverity, [sev]: !selectedSeverity[sev] })}
+                      className="rounded border-gray-300 dark:border-gray-600 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 bg-white dark:bg-gray-800 w-3.5 h-3.5 cursor-pointer" 
+                    />
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+                    <span className="font-semibold text-xs capitalize">{sev} Priority</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
  
-          {/* Status Filters */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary dark:text-gray-400 uppercase tracking-wider">Lifecycle Status</h3>
-            <div className="space-y-2">
+          {/* Status Filters — glass pill group */}
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Lifecycle Status</h3>
+            <div className="bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl border border-gray-100/80 dark:border-gray-800/60 p-3 space-y-1.5 shadow-inner">
               {Object.entries(STATUS_MAP).map(([label, value]) => (
-                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer hover:text-black dark:hover:text-white">
+                <label key={label} className="flex items-center gap-2.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:text-primary dark:hover:text-amber-400 transition-colors duration-150 py-0.5 px-1 rounded-lg hover:bg-primary/5 dark:hover:bg-amber-500/5">
                   <input 
                     type="checkbox" 
                     checked={selectedStatuses[value]} 
                     onChange={() => setSelectedStatuses({ ...selectedStatuses, [value]: !selectedStatuses[value] })}
-                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
+                    className="rounded border-gray-300 dark:border-gray-600 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 bg-white dark:bg-gray-800 w-3.5 h-3.5 cursor-pointer" 
                   />
-                  <span className="font-medium">{label}</span>
+                  <span className="font-medium text-xs">{label}</span>
                 </label>
               ))}
             </div>
           </div>
         </div>
  
-        {/* Analytics Tip */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30">
-          <div className="flex gap-2.5 items-start text-xs text-text-secondary dark:text-gray-400 leading-relaxed">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-primary dark:text-amber-500 mt-0.5" />
-            <p><strong>Deduplication Loop:</strong> Nearby duplicate complaints are merged automatically to prevent tickets from clustering on your view.</p>
+        {/* Analytics Tip — glassy accent */}
+        <div className="relative z-10 p-4 mx-3 mb-4 rounded-xl bg-primary/5 dark:bg-amber-500/5 backdrop-blur-sm border border-primary/10 dark:border-amber-500/10">
+          <div className="flex gap-2 items-start text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-primary dark:text-amber-500 mt-0.5" />
+            <p><strong className="text-gray-700 dark:text-gray-300">Deduplication Loop:</strong> Nearby duplicate complaints are merged automatically to prevent tickets from clustering on your view.</p>
           </div>
         </div>
       </div>
 
       {/* Main Map Area */}
       <div className="relative flex-1 h-full">
-        {/* Toggle Filters Button */}
+        {/* ── Glassmorphic Toggle Filters Button ── */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="absolute left-4 top-4 z-[1000] bg-white dark:bg-[#151B26] px-4 py-2.5 rounded-button shadow-lg border border-gray-200/80 dark:border-gray-800 text-text-primary dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-xl dark:shadow-none transition-all duration-300 flex items-center gap-2 font-bold text-xs cursor-pointer"
+          className="absolute left-4 top-4 z-[1000] flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          style={{
+            background: 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            color: 'inherit'
+          }}
         >
-          <Filter className="w-4 h-4 text-primary dark:text-amber-500" />
-          <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+          <Filter className="w-3.5 h-3.5 text-primary dark:text-amber-500" />
+          <span className="text-gray-800 dark:text-gray-200">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
         </button>
 
         {/* Leaflet Map Container */}
@@ -325,75 +345,81 @@ export default function MapDashboard() {
               position={ticket.location} 
               icon={createSeverityMarker(ticket.severity)}
             >
-              {/* Premium styled popup */}
+              {/* ── Glassmorphic Popup Card ── */}
               <Popup className="custom-leaflet-popup">
-                <div className={`w-64 overflow-hidden bg-white dark:bg-[#151B26] text-text-primary dark:text-gray-200 rounded-card flex flex-col font-sans border border-gray-150 dark:border-gray-800 border-t-4 shadow-xl ${
+                <div className={`w-64 overflow-hidden flex flex-col font-sans border-t-4 rounded-2xl shadow-2xl transition-all duration-300 hover:scale-[1.02] ${
                   ticket.severity === 'high' ? 'border-t-red-500' :
                   ticket.severity === 'medium' ? 'border-t-amber-500' :
                   'border-t-green-500'
-                }`}>
-                  {/* Card content padding */}
-                  <div className="p-5 space-y-4">
-                    {/* Header: Category & Status */}
-                    <div className="space-y-2">
-                      <div className="pr-6">
-                        <span className="font-black text-sm text-text-primary dark:text-white tracking-tight leading-tight block">
-                          {ticket.category} Report
-                        </span>
-                      </div>
+                }`}
+                  style={{
+                    background: 'rgba(255,255,255,0.88)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    borderTopWidth: '4px',
+                    borderTopColor: ticket.severity === 'high' ? '#ef4444' : ticket.severity === 'medium' ? '#f59e0b' : '#22c55e',
+                  }}
+                >
+                  <div className="p-4 space-y-3">
+                    {/* Category title */}
+                    <span className="font-black text-sm text-gray-900 tracking-tight leading-tight block">
+                      {ticket.category} Report
+                    </span>
 
-                      {/* Badges Row: Status and Severity stacked below title */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                          ticket.status === 'resolved' ? 'bg-green-100 dark:bg-green-950/40 text-green-850 dark:text-green-400' :
-                          ticket.status === 'in_progress' ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-850 dark:text-amber-400' :
-                          ticket.status === 'verified' ? 'bg-blue-100 dark:bg-blue-950/40 text-blue-850 dark:text-blue-400' :
-                          'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300'
-                        }`}>
-                          {ticket.status.replace('_', ' ')}
-                        </span>
-                        
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
-                          ticket.severity === 'high' ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-900/40' :
-                          ticket.severity === 'medium' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/40' :
-                          'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/40'
-                        }`}>
-                          {ticket.severity} Priority
-                        </span>
-                      </div>
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        ticket.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                        ticket.status === 'in_progress' ? 'bg-amber-100 text-amber-700' :
+                        ticket.status === 'verified' ? 'bg-blue-100 text-blue-700' :
+                        'bg-slate-100 text-slate-700'
+                      }`}>
+                        {ticket.status.replace('_', ' ')}
+                      </span>
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
+                        ticket.severity === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                        ticket.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-green-50 text-green-700 border-green-200'
+                      }`}>
+                        {ticket.severity} Priority
+                      </span>
                     </div>
 
-                    {/* Location label */}
-                    <p className="text-[11px] text-text-secondary dark:text-gray-400 leading-relaxed flex items-start gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary dark:text-amber-500 mt-0.5" />
+                    {/* Location */}
+                    <p className="text-[11px] text-gray-500 leading-relaxed flex items-start gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary mt-0.5" />
                       <span>{ticket.address}</span>
                     </p>
 
-                    {/* Stats counters row */}
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-text-secondary dark:text-gray-400 bg-gray-50/50 dark:bg-gray-900/40 p-2.5 rounded-card border border-gray-100 dark:border-gray-800 font-mono">
+                    {/* Stats row — frosted */}
+                    <div
+                      className="grid grid-cols-2 gap-2 p-2.5 rounded-xl text-[10px] font-mono"
+                      style={{ background: 'rgba(248,250,252,0.8)', backdropFilter: 'blur(8px)', border: '1px solid rgba(226,232,240,0.8)' }}
+                    >
                       <div className="space-y-0.5">
-                        <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Reports</p>
-                        <p className="font-extrabold text-sm text-text-primary dark:text-white flex items-center gap-1.5">
-                          <AlertCircle className="w-3.5 h-3.5 text-primary/60 dark:text-amber-500/60" />
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Reports</p>
+                        <p className="font-extrabold text-sm text-gray-900 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 text-primary/60" />
                           <span>{ticket.reports}</span>
                         </p>
                       </div>
-                      <div className="space-y-0.5 border-l border-gray-200/85 dark:border-gray-800 pl-2">
-                        <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Upvotes</p>
-                        <p className="font-extrabold text-sm text-text-primary dark:text-white flex items-center gap-1.5">
-                          <ThumbsUp className="w-3.5 h-3.5 text-primary/60 dark:text-amber-500/60" />
+                      <div className="space-y-0.5 border-l border-gray-200/80 pl-2">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Upvotes</p>
+                        <p className="font-extrabold text-sm text-gray-900 flex items-center gap-1">
+                          <ThumbsUp className="w-3.5 h-3.5 text-primary/60" />
                           <span>{ticket.votes}</span>
                         </p>
                       </div>
                     </div>
 
-                    {/* Navigation Link button with high visibility text and icon */}
+                    {/* CTA Button */}
                     <Link
                       to={`/ticket/${ticket.id}`}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary dark:bg-amber-500 hover:bg-primary/95 dark:hover:bg-amber-600 text-xs font-black text-white dark:text-black rounded-button shadow-md shadow-primary/10 dark:shadow-amber-500/10 hover:shadow-primary/20 dark:hover:shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-97 text-center cursor-pointer border-0"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 text-xs font-black text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-95 border-0 cursor-pointer"
                     >
                       <span>View Ticket Details</span>
-                      <Eye className="w-4 h-4 text-white dark:text-black" />
+                      <Eye className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
