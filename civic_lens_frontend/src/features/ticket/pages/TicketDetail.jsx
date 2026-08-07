@@ -11,6 +11,14 @@ export default function TicketDetail() {
   const navigate = useNavigate();
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
 
+  const getPhotoUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+      return url;
+    }
+    return `http://localhost:8000${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   // API loading states
   const [ticket, setTicket] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +62,17 @@ export default function TicketDetail() {
           { url: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=800&q=80', uploaded_by: 'Public Upload', uploaded_at: t.created_at },
           { url: 'https://images.unsplash.com/photo-1599740831146-80a8352307a8?auto=format&fit=crop&w=800&q=80', uploaded_by: 'System Audit', uploaded_at: t.created_at }
         ];
-        setTicketPhotos(t.photos && t.photos.length > 0 ? t.photos : defaultPhotos);
+
+        let photosList = t.photos && t.photos.length > 0 ? [...t.photos] : defaultPhotos;
+        if (t.resolved_photo) {
+          photosList.unshift({
+            url: t.resolved_photo.url,
+            uploaded_by: 'Admin Resolution Verification',
+            uploaded_at: t.resolved_photo.uploaded_at,
+            is_resolution: true
+          });
+        }
+        setTicketPhotos(photosList);
         setComments(commentsRes.data.data.comments || []);
         setIsLoading(false);
       })
@@ -242,7 +260,7 @@ export default function TicketDetail() {
             {/* Custom Carousel */}
             <div className="relative aspect-video w-full bg-gray-950 rounded-card overflow-hidden border border-gray-100 group shadow-inner">
               <img 
-                src={ticketPhotos[activePhotoIdx]?.url} 
+                src={getPhotoUrl(ticketPhotos[activePhotoIdx]?.url)} 
                 alt="Civic Issue Upload" 
                 className="w-full h-full object-contain transition-all duration-500" 
               />
@@ -252,12 +270,21 @@ export default function TicketDetail() {
                 <div className="space-y-0.5">
                   <p className="font-bold flex items-center gap-1">
                     <User className="w-3.5 h-3.5 text-accent" />
-                    <span>Submitted by {ticketPhotos[activePhotoIdx]?.uploaded_by || 'Citizen'}</span>
+                    <span>
+                      {ticketPhotos[activePhotoIdx]?.is_resolution 
+                        ? 'Resolution Proof Verification' 
+                        : `Submitted by ${ticketPhotos[activePhotoIdx]?.uploaded_by || 'Citizen'}`}
+                    </span>
                   </p>
                   <p className="text-gray-300 text-[10px]">
                     Uploaded on {ticketPhotos[activePhotoIdx]?.uploaded_at ? new Date(ticketPhotos[activePhotoIdx].uploaded_at).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
+                {ticketPhotos[activePhotoIdx]?.is_resolution && (
+                  <span className="px-2.5 py-1 bg-green-500 text-white rounded text-[9px] font-black uppercase tracking-wider shadow animate-pulse">
+                    Resolution Proof
+                  </span>
+                )}
                 <span className="px-2 py-0.5 bg-white/20 rounded backdrop-blur-md text-[10px] font-bold">
                   {activePhotoIdx + 1} / {ticketPhotos.length}
                 </span>
@@ -482,6 +509,29 @@ export default function TicketDetail() {
                 </div>
               )}
             </div>
+
+            {ticket.status === 'resolved' && ticket.resolved_photo && (
+              <div className="border-t border-gray-100 pt-4 mt-2 space-y-3">
+                <div className="p-3 bg-green-50 border border-green-200 rounded-card space-y-2">
+                  <p className="text-xs font-black text-green-800 flex items-center gap-1 font-sans">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>Solved & Verified by Admin</span>
+                  </p>
+                  <p className="text-[10px] text-green-700 leading-tight">
+                    This issue was resolved and verified with photographic proof.
+                  </p>
+                  {ticket.resolved_photo && (
+                    <div className="relative rounded overflow-hidden aspect-video border border-green-200 bg-black">
+                      <img 
+                        src={getPhotoUrl(ticket.resolved_photo.url)} 
+                        alt="Resolution proof" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
