@@ -119,6 +119,7 @@ export default function AdminMap() {
             severity: t.severity,
             status: t.status,
             address: t.address || 'Ahmedabad Municipal Grid',
+            zone_id: t.zone_id,
             lat,
             lng,
             reportsCount: t.report_count ?? 1,
@@ -376,7 +377,12 @@ export default function AdminMap() {
 
                     {/* Info */}
                     <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-gray-900 leading-tight">{t.category}</h4>
+                      <div className="flex gap-1.5 items-center flex-wrap">
+                        <h4 className="text-xs font-bold text-gray-900 leading-tight">{t.category}</h4>
+                        <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 uppercase tracking-wider font-mono">
+                          {t.zone_id ? t.zone_id.replace('Zone', '').trim() : 'Ahmedabad'}
+                        </span>
+                      </div>
                       <p className="text-[10px] text-gray-500 flex items-center gap-1 font-semibold leading-relaxed">
                         <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                         <span className="truncate">{t.address}</span>
@@ -407,6 +413,16 @@ export default function AdminMap() {
                         {t.createdAt ? new Date(t.createdAt.endsWith('Z') || t.createdAt.includes('+') || t.createdAt.includes('-') ? t.createdAt : `${t.createdAt}Z`).toLocaleDateString() : ''}
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}`, '_blank');
+                      }}
+                      className="w-full mt-2 py-1.5 bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-wider rounded shadow flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-300 border-0"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>Get Directions</span>
+                    </button>
                   </div>
                 </Popup>
               </Marker>
