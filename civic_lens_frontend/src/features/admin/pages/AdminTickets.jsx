@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit3, Trash2, ShieldAlert, Loader2, AlertCircle, X, Check, Save, RotateCcw } from 'lucide-react';
+import { Eye, Edit3, Trash2, ShieldAlert, Loader2, AlertCircle, X, Check, Save, RotateCcw, MapPin } from 'lucide-react';
 import api from '../../../services/api';
 
 function ImageWithFallback({ src, alt, className }) {
@@ -676,6 +676,29 @@ export default function AdminTickets() {
               <div>
                 <p className="text-gray-400 font-medium">Zone Address</p>
                 <p className="font-semibold text-gray-300 mt-0.5 truncate">{selectedViewTicket.address || 'Ahmedabad Grid'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Municipal Ward</p>
+                <p className="font-bold text-amber-500 mt-0.5 truncate">{selectedViewTicket.zone_id || 'Not Assigned'}</p>
+              </div>
+              <div className="col-span-2 flex justify-between items-center bg-[#0E131F]/40 border border-gray-800/80 p-3 rounded-card mt-1">
+                <div className="min-w-0">
+                  <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Navigation Coordinates</p>
+                  <p className="font-semibold text-xs text-white truncate">
+                    Lat: {selectedViewTicket.location?.coordinates?.[1]?.toFixed(6)}, Lng: {selectedViewTicket.location?.coordinates?.[0]?.toFixed(6)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const lat = selectedViewTicket.location?.coordinates?.[1];
+                    const lng = selectedViewTicket.location?.coordinates?.[0];
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+                  }}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-[10px] uppercase tracking-wider rounded-button shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Navigate</span>
+                </button>
               </div>
               <div>
                 <p className="text-gray-400 font-medium">Reports Linked</p>
