@@ -82,6 +82,17 @@ export default function MapDashboard() {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setTheme(localStorage.getItem('theme') || 'light');
+    };
+    window.addEventListener('theme-change', handleThemeChange);
+    return () => {
+      window.removeEventListener('theme-change', handleThemeChange);
+    };
+  }, []);
   
   // Pilot Center: Ahmedabad coordinates from documents
   const centerPosition = [23.0225, 72.5714];
@@ -167,38 +178,38 @@ export default function MapDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Syncing Ahmedabad Grid...</p>
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] dark:bg-[#0E131F] space-y-4">
+        <Loader2 className="w-10 h-10 text-primary dark:text-amber-500 animate-spin" />
+        <p className="text-xs font-bold text-text-secondary dark:text-gray-400 uppercase tracking-widest animate-pulse">Syncing Ahmedabad Grid...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] space-y-3 p-6 text-center">
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] w-full bg-[#FAFBFD] dark:bg-[#0E131F] space-y-3 p-6 text-center">
         <AlertCircle className="w-12 h-12 text-red-500" />
-        <h3 className="text-base font-extrabold text-text-primary">Connection Offline</h3>
-        <p className="text-xs text-text-secondary max-w-sm leading-relaxed">{error}</p>
+        <h3 className="text-base font-extrabold text-text-primary dark:text-white">Connection Offline</h3>
+        <p className="text-xs text-text-secondary dark:text-gray-400 max-w-sm leading-relaxed">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-[calc(100vh-64px)] w-full overflow-hidden bg-bg-light">
+    <div className="relative flex h-[calc(100vh-64px)] w-full overflow-hidden bg-bg-light dark:bg-[#0E131F]">
       
       {/* Side Filter Bar */}
       <div
-        className={`bg-white border-r border-gray-200/80 z-10 flex flex-col justify-between transition-all duration-300 shadow-xl ${
+        className={`bg-white dark:bg-[#151B26] border-r border-gray-200/80 dark:border-gray-800 z-10 flex flex-col justify-between transition-all duration-300 shadow-xl ${
           showFilters ? 'w-80' : 'w-0 overflow-hidden border-none shadow-none'
         }`}
       >
         <div className="p-6 overflow-y-auto space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-text-primary">Filter Reports</h2>
+            <h2 className="text-lg font-bold text-text-primary dark:text-white">Filter Reports</h2>
             <button 
               onClick={handleResetFilters}
-              className="text-text-secondary hover:text-text-primary p-1 hover:bg-gray-100 rounded transition-colors"
+              className="text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white p-1 hover:bg-gray-100 dark:hover:bg-gray-800/40 rounded transition-colors border-0 bg-transparent cursor-pointer"
               title="Reset Filters"
             >
               <RotateCcw className="w-4 h-4" />
@@ -212,22 +223,22 @@ export default function MapDashboard() {
               placeholder="Search reports or areas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-button bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all duration-300"
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-button bg-gray-50/50 dark:bg-gray-850 text-text-primary dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 dark:focus:ring-amber-500/10 focus:border-primary dark:focus:border-amber-500 transition-all duration-300"
             />
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
           </div>
  
           {/* Category Filters */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Issue Category</h3>
+            <h3 className="text-xs font-bold text-text-secondary dark:text-gray-400 uppercase tracking-wider">Issue Category</h3>
             <div className="space-y-2">
               {Object.entries(CATEGORY_MAP).map(([label, value]) => (
-                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer hover:text-black">
+                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer hover:text-black dark:hover:text-white">
                   <input 
                     type="checkbox" 
                     checked={selectedCategories[value]} 
                     onChange={() => setSelectedCategories({ ...selectedCategories, [value]: !selectedCategories[value] })}
-                    className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" 
+                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
                   />
                   <span className="font-medium">{label}</span>
                 </label>
@@ -237,15 +248,14 @@ export default function MapDashboard() {
  
           {/* Severity Filters */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Severity Level</h3>
-            <div className="space-y-2">
+            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Severity Level</h3>            <div className="space-y-2">
               {['high', 'medium', 'low'].map((sev) => (
-                <label key={sev} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer capitalize">
+                <label key={sev} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer capitalize hover:text-black dark:hover:text-white">
                   <input 
                     type="checkbox" 
                     checked={selectedSeverity[sev]} 
                     onChange={() => setSelectedSeverity({ ...selectedSeverity, [sev]: !selectedSeverity[sev] })}
-                    className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" 
+                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
                   />
                   <span className="font-semibold">{sev} Priority</span>
                 </label>
@@ -255,15 +265,15 @@ export default function MapDashboard() {
  
           {/* Status Filters */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Lifecycle Status</h3>
+            <h3 className="text-xs font-bold text-text-secondary dark:text-gray-400 uppercase tracking-wider">Lifecycle Status</h3>
             <div className="space-y-2">
               {Object.entries(STATUS_MAP).map(([label, value]) => (
-                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary cursor-pointer">
+                <label key={label} className="flex items-center gap-2.5 text-sm text-text-primary dark:text-gray-300 cursor-pointer hover:text-black dark:hover:text-white">
                   <input 
                     type="checkbox" 
                     checked={selectedStatuses[value]} 
                     onChange={() => setSelectedStatuses({ ...selectedStatuses, [value]: !selectedStatuses[value] })}
-                    className="rounded border-gray-300 text-primary focus:ring-primary h-4.5 w-4.5" 
+                    className="rounded border-gray-300 dark:border-gray-700 text-primary dark:text-amber-500 focus:ring-primary dark:focus:ring-amber-500 h-4.5 w-4.5 bg-white dark:bg-gray-850" 
                   />
                   <span className="font-medium">{label}</span>
                 </label>
@@ -271,11 +281,11 @@ export default function MapDashboard() {
             </div>
           </div>
         </div>
-
+ 
         {/* Analytics Tip */}
-        <div className="p-6 border-t border-gray-100 bg-gray-50/50">
-          <div className="flex gap-2.5 items-start text-xs text-text-secondary leading-relaxed">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-primary mt-0.5" />
+        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30">
+          <div className="flex gap-2.5 items-start text-xs text-text-secondary dark:text-gray-400 leading-relaxed">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-primary dark:text-amber-500 mt-0.5" />
             <p><strong>Deduplication Loop:</strong> Nearby duplicate complaints are merged automatically to prevent tickets from clustering on your view.</p>
           </div>
         </div>
@@ -286,9 +296,9 @@ export default function MapDashboard() {
         {/* Toggle Filters Button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="absolute left-4 top-4 z-[1000] bg-white px-4 py-2.5 rounded-button shadow-lg border border-gray-200/80 text-text-primary hover:bg-gray-50 hover:shadow-xl transition-all duration-300 flex items-center gap-2 font-bold text-xs"
+          className="absolute left-4 top-4 z-[1000] bg-white dark:bg-[#151B26] px-4 py-2.5 rounded-button shadow-lg border border-gray-200/80 dark:border-gray-800 text-text-primary dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-xl dark:shadow-none transition-all duration-300 flex items-center gap-2 font-bold text-xs cursor-pointer"
         >
-          <Filter className="w-4 h-4 text-primary" />
+          <Filter className="w-4 h-4 text-primary dark:text-amber-500" />
           <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
         </button>
 
@@ -299,10 +309,13 @@ export default function MapDashboard() {
           className="w-full h-full z-0"
           zoomControl={false} // Disable default zoom to keep UI premium
         >
-          {/* Tile Layer: CartoDB Positron (Modern Light Grid style) */}
+          {/* Tile Layer: Dynamic voyager light / dark matter depending on theme */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            url={theme === 'dark' 
+              ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+              : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            }
           />
 
           {/* Markers mapping */}
@@ -314,7 +327,7 @@ export default function MapDashboard() {
             >
               {/* Premium styled popup */}
               <Popup className="custom-leaflet-popup">
-                <div className={`w-64 overflow-hidden bg-white text-text-primary rounded-card flex flex-col font-sans border-t-4 shadow-xl ${
+                <div className={`w-64 overflow-hidden bg-white dark:bg-[#151B26] text-text-primary dark:text-gray-200 rounded-card flex flex-col font-sans border border-gray-150 dark:border-gray-800 border-t-4 shadow-xl ${
                   ticket.severity === 'high' ? 'border-t-red-500' :
                   ticket.severity === 'medium' ? 'border-t-amber-500' :
                   'border-t-green-500'
@@ -324,7 +337,7 @@ export default function MapDashboard() {
                     {/* Header: Category & Status */}
                     <div className="space-y-2">
                       <div className="pr-6">
-                        <span className="font-black text-sm text-text-primary tracking-tight leading-tight block">
+                        <span className="font-black text-sm text-text-primary dark:text-white tracking-tight leading-tight block">
                           {ticket.category} Report
                         </span>
                       </div>
@@ -332,18 +345,18 @@ export default function MapDashboard() {
                       {/* Badges Row: Status and Severity stacked below title */}
                       <div className="flex flex-wrap gap-1.5">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                          ticket.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                          ticket.status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
-                          ticket.status === 'verified' ? 'bg-blue-100 text-blue-800' :
-                          'bg-slate-100 text-slate-700'
+                          ticket.status === 'resolved' ? 'bg-green-100 dark:bg-green-950/40 text-green-850 dark:text-green-400' :
+                          ticket.status === 'in_progress' ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-850 dark:text-amber-400' :
+                          ticket.status === 'verified' ? 'bg-blue-100 dark:bg-blue-950/40 text-blue-850 dark:text-blue-400' :
+                          'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300'
                         }`}>
                           {ticket.status.replace('_', ' ')}
                         </span>
                         
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
-                          ticket.severity === 'high' ? 'bg-red-50 text-red-700 border-red-200/50' :
-                          ticket.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200/50' :
-                          'bg-green-50 text-green-700 border-green-200/50'
+                          ticket.severity === 'high' ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-900/40' :
+                          ticket.severity === 'medium' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/40' :
+                          'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/40'
                         }`}>
                           {ticket.severity} Priority
                         </span>
@@ -351,24 +364,24 @@ export default function MapDashboard() {
                     </div>
 
                     {/* Location label */}
-                    <p className="text-[11px] text-text-secondary leading-relaxed flex items-start gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary mt-0.5" />
+                    <p className="text-[11px] text-text-secondary dark:text-gray-400 leading-relaxed flex items-start gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary dark:text-amber-500 mt-0.5" />
                       <span>{ticket.address}</span>
                     </p>
 
                     {/* Stats counters row */}
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-text-secondary bg-gray-50/50 p-2.5 rounded-card border border-gray-100 font-mono">
+                    <div className="grid grid-cols-2 gap-2 text-[10px] text-text-secondary dark:text-gray-400 bg-gray-50/50 dark:bg-gray-900/40 p-2.5 rounded-card border border-gray-100 dark:border-gray-800 font-mono">
                       <div className="space-y-0.5">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Reports</p>
-                        <p className="font-extrabold text-sm text-text-primary flex items-center gap-1.5">
-                          <AlertCircle className="w-3.5 h-3.5 text-primary/60" />
+                        <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Reports</p>
+                        <p className="font-extrabold text-sm text-text-primary dark:text-white flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-primary/60 dark:text-amber-500/60" />
                           <span>{ticket.reports}</span>
                         </p>
                       </div>
-                      <div className="space-y-0.5 border-l border-gray-200/85 pl-2">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Upvotes</p>
-                        <p className="font-extrabold text-sm text-text-primary flex items-center gap-1.5">
-                          <ThumbsUp className="w-3.5 h-3.5 text-primary/60" />
+                      <div className="space-y-0.5 border-l border-gray-200/85 dark:border-gray-800 pl-2">
+                        <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Upvotes</p>
+                        <p className="font-extrabold text-sm text-text-primary dark:text-white flex items-center gap-1.5">
+                          <ThumbsUp className="w-3.5 h-3.5 text-primary/60 dark:text-amber-500/60" />
                           <span>{ticket.votes}</span>
                         </p>
                       </div>
@@ -377,10 +390,10 @@ export default function MapDashboard() {
                     {/* Navigation Link button with high visibility text and icon */}
                     <Link
                       to={`/ticket/${ticket.id}`}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/95 text-xs font-black text-white rounded-button shadow-md shadow-primary/10 hover:shadow-primary/20 transition-all hover:scale-[1.02] active:scale-97 text-center cursor-pointer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary dark:bg-amber-500 hover:bg-primary/95 dark:hover:bg-amber-600 text-xs font-black text-white dark:text-black rounded-button shadow-md shadow-primary/10 dark:shadow-amber-500/10 hover:shadow-primary/20 dark:hover:shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-97 text-center cursor-pointer border-0"
                     >
                       <span>View Ticket Details</span>
-                      <Eye className="w-4 h-4 text-white" />
+                      <Eye className="w-4 h-4 text-white dark:text-black" />
                     </Link>
                   </div>
                 </div>
