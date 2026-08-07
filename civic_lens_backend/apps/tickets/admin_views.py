@@ -14,7 +14,8 @@ from common.pagination import CursorPagination
 from common.permissions import IsAdmin, IsAdminOrModerator
 from common.response import error, paginated, success
 
-from .models import Ticket, TICKET_STATUS_CHOICES
+from .models import Photo, Ticket, TICKET_STATUS_CHOICES
+from apps.reports.services import ImageStorageService
 
 VALID_STATUS_TRANSITIONS = {
     "reported": {"verified", "acknowledged", "resolved"},
@@ -88,6 +89,20 @@ class AdminTicketStatusUpdateView(APIView):
         ticket.append_status_history(new_status, changed_by=str(request.user.id), note=note)
         if new_status == "resolved":
             import datetime
+
+            resolved_image = request.FILES.get("resolved_image")
+            if resolved_image:
+                photo_url = ImageStorageService.upload(resolved_image)
+                ticket.resolved_photo = Photo(
+                    url=photo_url,
+                    uploaded_by=str(request.user.id),
+                )
+            elif not ticket.resolved_photo:
+                return error(
+                    "RESOLUTION_PHOTO_REQUIRED",
+                    "A verification photo is required to mark the ticket as resolved.",
+                    status=400,
+                )
 
             ticket.resolved_at = datetime.datetime.utcnow()
         ticket.save()
