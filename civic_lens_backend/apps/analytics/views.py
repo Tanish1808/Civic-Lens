@@ -275,8 +275,8 @@ class PublicWardAnalyticsView(APIView):
         
         data = []
         for rank, zone in enumerate(zones, 1):
-            active_count = Ticket.objects(zone_id=zone, status__ne="resolved").count()
-            resolved_count = Ticket.objects(zone_id=zone, status="resolved").count()
+            active_count = Ticket.objects(zone_id=zone, is_flagged_spam=False, status__ne="resolved").count()
+            resolved_count = Ticket.objects(zone_id=zone, is_flagged_spam=False, status="resolved").count()
             total_count = active_count + resolved_count
             
             if total_count > 0:
