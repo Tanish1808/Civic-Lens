@@ -65,9 +65,10 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white/70 dark:bg-[#0E131F]/80 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-850/80 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center gap-8">
-            {/* Brand Logo Container */}
+        <div className="flex justify-between md:grid md:grid-cols-[auto_1fr_auto] items-center h-16">
+          
+          {/* 1. Left: Brand Logo Container */}
+          <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
               <div className="relative flex items-center justify-center bg-primary dark:bg-amber-500 text-white dark:text-black w-9 h-9 rounded-card shadow-md shadow-primary/20 dark:shadow-amber-500/15 group-hover:scale-105 transition-transform duration-300">
                 <Camera className="w-5 h-5" />
@@ -77,60 +78,60 @@ export default function Navbar() {
                 Civic<span className="text-primary dark:text-amber-500 font-normal">Lens</span>
               </span>
             </Link>
-
-            {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center gap-2">
-              <NavLink to="/dashboard" className={activeStyle}>
-                {({ isActive }) => (
-                  <>
-                    <Map className="w-4 h-4" />
-                    <span>Map Dashboard</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              <NavLink to="/report" className={activeStyle}>
-                {({ isActive }) => (
-                  <>
-                    <Camera className="w-4 h-4" />
-                    <span>Report Issue</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              <NavLink to="/leaderboard" className={activeStyle}>
-                {({ isActive }) => (
-                  <>
-                    <Trophy className="w-4 h-4" />
-                    <span>Leaderboard</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              {isLoggedIn && (
-                <NavLink to="/my-reports" className={activeStyle}>
-                  {({ isActive }) => (
-                    <>
-                      <FileText className="w-4 h-4" />
-                      <span>My Reports</span>
-                      {isActive && (
-                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              )}
-            </div>
           </div>
 
-          {/* Desktop Right Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* 2. Center: Primary Navigation Links */}
+          <div className="hidden md:flex items-center justify-center gap-2">
+            <NavLink to="/dashboard" className={activeStyle}>
+              {({ isActive }) => (
+                <>
+                  <Map className="w-4 h-4" />
+                  <span>Map Dashboard</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                  )}
+                </>
+              )}
+            </NavLink>
+            <NavLink to="/report" className={activeStyle}>
+              {({ isActive }) => (
+                <>
+                  <Camera className="w-4 h-4" />
+                  <span>Report Issue</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                  )}
+                </>
+              )}
+            </NavLink>
+            <NavLink to="/leaderboard" className={activeStyle}>
+              {({ isActive }) => (
+                <>
+                  <Trophy className="w-4 h-4" />
+                  <span>Leaderboard</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                  )}
+                </>
+              )}
+            </NavLink>
+            {isLoggedIn && (
+              <NavLink to="/my-reports" className={activeStyle}>
+                {({ isActive }) => (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    <span>My Reports</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            )}
+          </div>
+
+          {/* 3. Right: Desktop Right Actions */}
+          <div className="hidden md:flex items-center justify-end gap-4">
             <button
               onClick={toggleTheme}
               className="p-2 text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/40 rounded-full transition-colors cursor-pointer border-0 bg-transparent"
