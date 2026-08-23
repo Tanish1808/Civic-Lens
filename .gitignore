@@ -1,0 +1,41 @@
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python compiled bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment configurations (Crucial for blocking leaks)
+.env
+.env.local
+.env.*.local
+*.local
+
+# Local SQLite databases
+*.sqlite3
+
+# Node dependencies and build folders
+node_modules/
+dist/
+dist-ssr/
+
+# System and logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+.vscode/
+!.vscode/extensions.json
+.idea/
+
+# Local media uploads
+civic_lens_backend/media/
+
