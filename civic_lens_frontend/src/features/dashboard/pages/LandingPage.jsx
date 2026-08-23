@@ -22,8 +22,7 @@ import {
   Camera, Map, MapPin, CheckCircle2, AlertTriangle, 
   Layers, ChevronDown, ChevronUp, Github, X, Loader2, 
   Crosshair, Compass, Activity, ShieldCheck, Droplets, 
-  Trash2, Lightbulb, AlertOctagon, ArrowUpRight, TrendingUp,
-  Sparkles
+  Trash2, Lightbulb, AlertOctagon, ArrowUpRight, TrendingUp
 } from 'lucide-react';
 import api from '../../../services/api';
 import potholeSurveyImg from '../../../assets/pothole_field_survey.jpg';
