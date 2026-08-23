@@ -17,11 +17,19 @@
 }
 
 .leaflet-popup-content-wrapper {
-  @apply rounded-card shadow-lg bg-white dark:bg-bg-dark border border-gray-100;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
 }
 
-.leaflet-popup-tip {
-  @apply bg-white dark:bg-bg-dark;
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: inherit !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none !important;
 }
 
 /* Micro-interactions & animations */
@@ -45,28 +53,38 @@
 }
 
 /* Custom leaflet overrides */
-.custom-leaflet-popup .leaflet-popup-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 256px !important;
-  line-height: inherit !important;
+.custom-leaflet-popup .leaflet-popup-close-button {
+  top: 8px !important;
+  right: 8px !important;
+  color: #10263A !important;
+  background: #F6F2E9 !important;
+  border: 1px solid #D8D2C2 !important;
+  border-radius: 4px !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  transition: all 0.2s !important;
+  z-index: 10 !important;
 }
 
-.custom-leaflet-popup .leaflet-popup-close-button {
-  top: 10px !important;
-  right: 10px !important;
-  color: #94a3b8 !important;
-  font-size: 18px !important;
-  transition: color 0.2s !important;
+.dark .custom-leaflet-popup .leaflet-popup-close-button {
+  color: #ffffff !important;
+  background: #151B26 !important;
+  border-color: #374151 !important;
 }
 
 .custom-leaflet-popup .leaflet-popup-close-button:hover {
-  color: #1e293b !important;
+  background: #E8A33D !important;
+  color: #10263A !important;
+  border-color: #E8A33D !important;
 }
 
-/* Force popup action links to render as white text without default underlines */
+/* Force popup action links to render without default underlines */
 .custom-leaflet-popup .leaflet-popup-content a {
-  color: #ffffff !important;
   text-decoration: none !important;
 }
 
