@@ -97,13 +97,15 @@ export default function AppRoutes() {
         <Route path="/dashboard" element={<MapDashboard />} />
         <Route path="/ticket/:id" element={<TicketDetail />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
         
         {/* Protected citizen routes */}
         <Route path="/report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
         <Route path="/my-reports" element={<ProtectedRoute><MyReports /></ProtectedRoute>} />
       </Route>
+
+      {/* Standalone Citizen Auth routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
       {/* Standalone Admin Login route */}
       <Route path="/admin/login" element={<AdminLogin />} />
