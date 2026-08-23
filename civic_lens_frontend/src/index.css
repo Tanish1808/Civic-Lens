@@ -104,3 +104,34 @@
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }
+
+/* ── Survey / Field Inspection Motifs ── */
+.survey-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, #D8D2C2 1px, transparent 1px),
+    linear-gradient(to bottom, #D8D2C2 1px, transparent 1px);
+}
+
+.dark .survey-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+.survey-stamp-seal {
+  transform: rotate(-2deg);
+  border-style: double;
+  letter-spacing: 0.12em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-scan-line,
+  .ai-scan-glow,
+  .dropzone-shimmer,
+  .animate-shake,
+  .animate-fade-in {
+    animation: none !important;
+  }
+}
+
