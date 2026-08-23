@@ -236,7 +236,7 @@ export default function LandingPage() {
               Turn road craters, waterlogging, illegal dumps, and broken streetlights into public, tracked inspection dossiers. Machine learning classifies the issue and clusters duplicate neighborhood reports into one high-priority municipal work order.
             </p>
 
-            {/* Action Buttons: Solid Stamp + Dashed Permit Cut-Line */}
+            {/* Action Buttons: Solid Stamp + Sharp Field Secondary Button */}
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 to="/report"
@@ -248,9 +248,9 @@ export default function LandingPage() {
               
               <Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2 px-7 py-4 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider rounded-button border-2 border-dashed border-ink/40 dark:border-amber-400/40 bg-paper-sheet/80 dark:bg-gray-850/80 text-ink dark:text-gray-200 hover:border-ink dark:hover:border-amber-400 hover:bg-paper-card dark:hover:bg-gray-800 transition-all active:scale-97 cursor-pointer"
+                className="inline-flex items-center gap-2.5 px-7 py-4 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider rounded-button border-2 border-ink dark:border-gray-600 bg-paper-sheet dark:bg-[#151B26] text-ink dark:text-white hover:border-accent dark:hover:border-accent hover:bg-paper-card dark:hover:bg-[#1C2436] transition-all active:scale-97 shadow-md cursor-pointer group"
               >
-                <Map className="w-4 h-4 text-primary dark:text-amber-400" />
+                <Map className="w-4 h-4 text-primary dark:text-amber-400 group-hover:scale-110 transition-transform" />
                 <span>View the map</span>
               </Link>
             </div>
@@ -809,7 +809,7 @@ export default function LandingPage() {
                     </Link>
                     <Link
                       to="/report"
-                      className="inline-flex items-center gap-2 px-6 py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider rounded-button border border-ink-line dark:border-gray-700 bg-paper-card dark:bg-gray-800 text-ink dark:text-gray-200 hover:bg-paper-sheet dark:hover:bg-gray-750 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-2 px-6 py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider rounded-button border border-ink-line dark:border-gray-700 bg-paper-card dark:bg-gray-800 text-ink dark:text-gray-200 hover:bg-paper-sheet dark:hover:bg-gray-700 transition-all cursor-pointer"
                     >
                       <span>Submit new geotag</span>
                     </Link>
