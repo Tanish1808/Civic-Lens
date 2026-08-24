@@ -13,6 +13,7 @@ import Login from '../features/auth/pages/Login';
 import Signup from '../features/auth/pages/Signup';
 import Leaderboard from '../features/dashboard/pages/Leaderboard';
 import Profile from '../features/profile/pages/Profile';
+import TermsOfService from '../features/legal/pages/TermsOfService';
 
 // Admin Pages
 import AdminLogin from '../features/auth/pages/AdminLogin';
@@ -108,6 +109,8 @@ export default function AppRoutes() {
       {/* Standalone Citizen Auth routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
 
       {/* Standalone Admin Login route */}
       <Route path="/admin/login" element={<AdminLogin />} />
