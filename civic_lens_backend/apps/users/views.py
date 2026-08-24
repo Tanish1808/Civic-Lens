@@ -17,6 +17,7 @@ from .serializers import (
     LoginSerializer,
     SignupSerializer,
     UserUpdateSerializer,
+    ChangePasswordSerializer,
     SupportRequestSerializer,
 )
 
@@ -206,6 +207,24 @@ class MeView(APIView):
             setattr(user, field, value)
         user.save()
         return success(user.to_public_dict())
+
+
+class ChangePasswordView(APIView):
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return error("UNAUTHORIZED", "Authentication required.", status=401)
+        
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = request.user
+        if not user.check_password(data["current_password"]):
+            return error("INVALID_PASSWORD", "Current password does not match.", status=400)
+
+        user.set_password(data["new_password"])
+        user.save()
+        return success({"message": "Password changed successfully."})
 
 
 class LeaderboardView(APIView):
