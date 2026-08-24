@@ -26,11 +26,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Camera, User, Mail, Phone, Lock, Eye, EyeOff, AlertTriangle, 
   Loader2, ShieldCheck, ArrowLeft, ArrowRight, Sun, Moon,
-  FileCheck, Sparkles, CheckCircle2
+  FileCheck, Sparkles, CheckCircle2, Scale, X, ExternalLink
 } from 'lucide-react';
 import api from '../../../services/api';
 
@@ -44,6 +45,7 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // UI States
   const [showPassword, setShowPassword] = useState(false);
@@ -519,9 +521,16 @@ export default function Signup() {
                       />
                       <span>
                         I agree to the{' '}
-                        <span className="font-bold text-primary dark:text-amber-400 underline">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowTermsModal(true);
+                          }}
+                          className="font-bold text-primary dark:text-amber-400 hover:text-accent underline inline-flex items-center gap-0.5 bg-transparent border-0 p-0 cursor-pointer text-[11px]"
+                        >
                           Terms of Service
-                        </span>{' '}
+                        </button>{' '}
                         and civic reporting guidelines.
                       </span>
                     </label>
@@ -687,6 +696,107 @@ export default function Signup() {
           </div>
         </div>
       </footer>
+
+      {/* ── TERMS OF SERVICE MODAL (PORTAL TO BODY) ── */}
+      {showTermsModal && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div 
+            className="relative bg-paper-card dark:bg-[#151B26] border-2 border-ink dark:border-gray-700 rounded-card shadow-2xl p-6 sm:p-8 max-w-2xl w-full max-h-[85vh] flex flex-col text-left mx-auto transform transition-all animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Corner Reticles */}
+            <div className="absolute top-2 left-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┌</div>
+            <div className="absolute top-2 right-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┐</div>
+            <div className="absolute bottom-2 left-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">└</div>
+            <div className="absolute bottom-2 right-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┘</div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-ink-line dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-card bg-accent/20 text-accent border border-accent/40 flex items-center justify-center flex-shrink-0">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-bold text-accent uppercase tracking-wider block">// CITIZEN CHARTER</span>
+                  <h3 className="font-display text-lg font-bold text-ink dark:text-white">Civic Lens Terms of Service</h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="text-ink/60 dark:text-gray-400 hover:text-ink dark:hover:text-white p-1 rounded hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors border-0 bg-transparent cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Terms Content */}
+            <div className="overflow-y-auto py-4 pr-2 space-y-4 text-xs font-sans text-ink/80 dark:text-gray-300 leading-relaxed max-h-[55vh]">
+              <div className="p-3 bg-paper dark:bg-gray-900 border border-ink-line dark:border-gray-800 rounded font-mono text-[11px] space-y-1 text-ink/70 dark:text-gray-400">
+                <div className="font-bold text-accent">AHMEDABAD MUNICIPAL CIVIC INTELLIGENCE GRID</div>
+                <div>Operational Scope: Potholes, Road Hazards, Waterlogging, Lighting & Sanitation</div>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-mono font-bold text-ink dark:text-white uppercase text-[11px]">01. Authentic Field Reporting</h4>
+                <p>All photographs, descriptions, and GPS locations submitted must represent genuine, on-site civic defects. Uploading digitally altered media or spoofed coordinates leads to account deactivation.</p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-mono font-bold text-ink dark:text-white uppercase text-[11px]">02. Spatial Deduplication & AI Triage</h4>
+                <p>Submissions within 50 meters of existing issues are automatically merged into single unified municipal work orders. Computer vision models assist engineers in prioritizing urgent hazards.</p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-mono font-bold text-ink dark:text-white uppercase text-[11px]">03. Privacy & Telemetry Usage</h4>
+                <p>Field photographs and defect coordinates are published to the public tracking dashboard and shared with municipal repair crews. Personal identity credentials remain strictly encrypted.</p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-mono font-bold text-ink dark:text-white uppercase text-[11px]">04. Karma & Community Verification</h4>
+                <p>Citizens earn Karma XP for verified reports and repair confirmations. Manipulation of community upvotes will result in reputation forfeiture.</p>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-ink-line dark:border-gray-800 font-mono text-xs">
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                <span>Read Full Document in New Tab</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="px-4 py-2 bg-paper dark:bg-gray-800 hover:bg-paper-sheet text-ink dark:text-white border border-ink-line dark:border-gray-700 rounded-button font-bold uppercase transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgreedToTerms(true);
+                    setShowTermsModal(false);
+                  }}
+                  className="px-5 py-2 bg-accent hover:bg-amber-400 text-ink font-bold uppercase tracking-wider rounded-button transition-colors cursor-pointer border-0 shadow"
+                >
+                  I Agree & Accept
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );
