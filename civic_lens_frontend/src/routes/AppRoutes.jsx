@@ -12,6 +12,7 @@ import MyReports from '../features/ticket/pages/MyReports';
 import Login from '../features/auth/pages/Login';
 import Signup from '../features/auth/pages/Signup';
 import Leaderboard from '../features/dashboard/pages/Leaderboard';
+import Profile from '../features/profile/pages/Profile';
 
 // Admin Pages
 import AdminLogin from '../features/auth/pages/AdminLogin';
@@ -101,6 +102,7 @@ export default function AppRoutes() {
         {/* Protected citizen routes */}
         <Route path="/report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
         <Route path="/my-reports" element={<ProtectedRoute><MyReports /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Route>
 
       {/* Standalone Citizen Auth routes */}

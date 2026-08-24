@@ -33,6 +33,14 @@ class UserUpdateSerializer(serializers.Serializer):
         return validate_phone(value) if value else value
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, required=True)
+
+    def validate_new_password(self, value):
+        return validate_password(value)
+
+
 class SupportRequestSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     email = serializers.EmailField(max_length=150)
