@@ -23,14 +23,11 @@
  *      * Severity: [Q/7] Low (#4CAF7D), [W/8] Medium (#E8A33D), [E/9] High (#D64545).
  *    - Visible focus, radio semantics, and integrated `kbd` shortcut badges.
  * 
- * 4. Keyboard Shortcuts for Rapid Triage:
- *    - `1`–`5`: Instant Category selection.
- *    - `Q`/`W`/`E` or `7`/`8`/`9` or `L`/`M`/`H`: Instant Severity selection.
- *    - `A` / `Enter`: Approve Override & Create Ticket.
- *    - `D` / `Backspace`: Discard as Spam.
- *    - `J` / `K` (or `ArrowLeft`/`ArrowRight`): Previous / Next card in queue.
- *    - `Z`: Undo previous action within the buffer window.
- *    - `?`: Toggle Keyboard Shortcuts Cheatsheet.
+ * 4. Keyboard Shortcuts with Master ON / OFF Toggle (Mis-Click Protection):
+ *    - Added a 1-click **Shortcuts: ON / OFF** toggle switch in the header (persisted in localStorage).
+ *    - When ON: Power users can triage at extreme velocity using `1`–`5`, `Q`/`W`/`E`, `A` (Approve), `D` (Discard).
+ *    - When OFF: Disables all key listeners completely for standard, 100% safe mouse-click triage.
+ *    - `?`: Toggles Keyboard Shortcuts Cheatsheet modal.
  * 
  * 5. Viewfinder Evidence Photo Framing:
  *    - Camera viewfinder reticles (`┌ ┐ └ ┘`) in Signal Amber (#E8A33D).
@@ -51,7 +48,8 @@ import {
   ShieldAlert, Check, Ban, MapPin, Loader2, AlertCircle, 
   Sparkles, Keyboard, Layers, ArrowLeft, ArrowRight, Clock,
   Maximize2, X, RefreshCw, CheckCircle2, ChevronRight,
-  HelpCircle, RotateCcw, AlertTriangle, Eye, ZoomIn, FileText
+  HelpCircle, RotateCcw, AlertTriangle, Eye, ZoomIn, FileText,
+  ToggleLeft, ToggleRight
 } from 'lucide-react';
 import api from '../../../services/api';
 
@@ -154,6 +152,11 @@ export default function ManualReviewQueue() {
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
+  // Keyboard Shortcuts Master Toggle (persisted in localStorage)
+  const [shortcutsEnabled, setShortcutsEnabled] = useState(() => {
+    return localStorage.getItem('cl_shortcuts_enabled') !== 'false';
+  });
+
   // Override selections mapped by report ID
   const [overrides, setOverrides] = useState({});
 
@@ -193,6 +196,14 @@ export default function ManualReviewQueue() {
       message: config.message || '',
       onConfirm: config.onConfirm || null,
       severity: config.severity || 'info'
+    });
+  };
+
+  const toggleShortcuts = () => {
+    setShortcutsEnabled(prev => {
+      const nextVal = !prev;
+      localStorage.setItem('cl_shortcuts_enabled', String(nextVal));
+      return nextVal;
     });
   };
 
@@ -384,28 +395,30 @@ export default function ManualReviewQueue() {
     setPendingUndoAction(null);
   };
 
-  // Keyboard shortcut listener
+  // Keyboard shortcut listener (Controlled by shortcutsEnabled master toggle)
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ignore if user is typing in an input or modal is open
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
       if (modalConfig.isOpen || lightboxUrl) return;
 
-      const key = e.key.toLowerCase();
-
-      // Shortcuts Modal Toggle
+      // Always allow '?' to open cheatsheet or Escape to close modals
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault();
         setShowShortcutsModal(prev => !prev);
         return;
       }
 
-      // Close modal on Escape
       if (e.key === 'Escape') {
         if (showShortcutsModal) setShowShortcutsModal(false);
         if (lightboxUrl) setLightboxUrl(null);
         return;
       }
+
+      // If shortcuts are toggled OFF, ignore all triage keys
+      if (!shortcutsEnabled) return;
+
+      const key = e.key.toLowerCase();
 
       // Category shortcuts: 1, 2, 3, 4, 5
       if (['1', '2', '3', '4', '5'].includes(e.key)) {
@@ -451,7 +464,7 @@ export default function ManualReviewQueue() {
       }
 
       // Undo shortcut: Z
-      if (key === 'z' && (e.ctrlKey || e.metaKey || true)) {
+      if (key === 'z') {
         if (pendingUndoAction) {
           e.preventDefault();
           handleUndo();
@@ -461,7 +474,7 @@ export default function ManualReviewQueue() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentItem, overrides, currentIndex, reviews, modalConfig, lightboxUrl, showShortcutsModal, pendingUndoAction]);
+  }, [currentItem, overrides, currentIndex, reviews, modalConfig, lightboxUrl, showShortcutsModal, pendingUndoAction, shortcutsEnabled]);
 
   // Image URL helper
   const getPhotoUrl = (rawUrl) => {
@@ -519,16 +532,35 @@ export default function ManualReviewQueue() {
             <span className="text-severity-high font-semibold">{sessionStats.discarded} Discarded</span>
           </div>
 
+          {/* Master Keyboard Shortcuts ON / OFF Toggle Switch */}
+          <button
+            type="button"
+            onClick={toggleShortcuts}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-card border text-xs font-mono transition-all cursor-pointer shadow-sm active:scale-95 ${
+              shortcutsEnabled
+                ? 'bg-accent/15 border-accent text-accent font-bold ring-1 ring-accent/30'
+                : 'bg-[#151B26] border-ink-line/25 text-paper/50 hover:text-paper hover:border-ink-line/40'
+            }`}
+            title={`Keyboard shortcuts are currently ${shortcutsEnabled ? 'ENABLED' : 'DISABLED'}. Click to toggle.`}
+          >
+            <Keyboard className={`w-3.5 h-3.5 ${shortcutsEnabled ? 'text-accent' : 'text-paper/40'}`} />
+            <span className="hidden sm:inline">SHORTCUTS:</span>
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold ${
+              shortcutsEnabled ? 'bg-accent text-ink' : 'bg-ink-muted text-paper/60'
+            }`}>
+              {shortcutsEnabled ? 'ON' : 'OFF'}
+            </span>
+          </button>
+
           {/* Shortcuts Cheatsheet Trigger */}
           <button
             type="button"
             onClick={() => setShowShortcutsModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#151B26] hover:bg-ink-muted/50 border border-ink-line/25 hover:border-accent/40 rounded-card text-xs font-mono font-semibold text-paper/80 transition-all cursor-pointer shadow-sm active:scale-95"
-            title="View keyboard shortcuts"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#151B26] hover:bg-ink-muted/50 border border-ink-line/25 hover:border-accent/40 rounded-card text-xs font-mono font-semibold text-paper/80 transition-all cursor-pointer shadow-sm active:scale-95"
+            title="View keyboard shortcuts guide"
           >
-            <Keyboard className="w-3.5 h-3.5 text-accent" />
-            <span className="hidden md:inline">KEYBOARD</span>
-            <span className="px-1.5 py-0.2 bg-ink-muted text-accent font-bold rounded text-[10px] border border-ink-line/30">?</span>
+            <HelpCircle className="w-3.5 h-3.5 text-accent" />
+            <span className="hidden md:inline">GUIDE</span>
           </button>
 
           {/* Sync / Refresh Queue */}
@@ -536,7 +568,7 @@ export default function ManualReviewQueue() {
             type="button"
             onClick={fetchQueue}
             disabled={isLoading}
-            className="flex items-center gap-2 px-3 py-2 bg-[#151B26] hover:bg-ink-muted/50 border border-ink-line/20 hover:border-ink-line/40 rounded-card text-xs font-mono text-paper/80 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#151B26] hover:bg-ink-muted/50 border border-ink-line/20 hover:border-ink-line/40 rounded-card text-xs font-mono text-paper/80 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
             title="Refresh queue"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-accent ${isLoading ? 'animate-spin' : ''}`} />
@@ -573,7 +605,9 @@ export default function ManualReviewQueue() {
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>UNDO</span>
-              <span className="px-1 bg-ink/20 text-ink text-[10px] rounded ml-1 font-extrabold">[Z]</span>
+              {shortcutsEnabled && (
+                <span className="px-1 bg-ink/20 text-ink text-[10px] rounded ml-1 font-extrabold">[Z]</span>
+              )}
             </button>
           </div>
 
@@ -670,11 +704,11 @@ export default function ManualReviewQueue() {
                 onClick={stepPrev}
                 disabled={currentIndex === 0}
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-ink border border-ink-line/20 hover:border-accent/40 rounded text-xs font-mono text-paper/80 hover:text-paper disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
-                title="Previous case (Shortcut: J or Left Arrow)"
+                title="Previous case"
               >
                 <ArrowLeft className="w-3 h-3 text-accent" />
                 <span>PREV</span>
-                <span className="text-[10px] text-paper/40">[J]</span>
+                {shortcutsEnabled && <span className="text-[10px] text-paper/40">[J]</span>}
               </button>
 
               <button
@@ -682,10 +716,10 @@ export default function ManualReviewQueue() {
                 onClick={stepNext}
                 disabled={currentIndex === reviews.length - 1}
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-ink border border-ink-line/20 hover:border-accent/40 rounded text-xs font-mono text-paper/80 hover:text-paper disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
-                title="Next case (Shortcut: K or Right Arrow)"
+                title="Next case"
               >
                 <span>NEXT</span>
-                <span className="text-[10px] text-paper/40">[K]</span>
+                {shortcutsEnabled && <span className="text-[10px] text-paper/40">[K]</span>}
                 <ArrowRight className="w-3 h-3 text-accent" />
               </button>
             </div>
@@ -840,7 +874,7 @@ export default function ManualReviewQueue() {
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-paper/70 flex items-center gap-1.5">
                             <span>1. Assign Final Category</span>
-                            <span className="text-paper/40 font-normal">(Keys 1–5)</span>
+                            {shortcutsEnabled && <span className="text-paper/40 font-normal">(Keys 1–5)</span>}
                           </label>
                           <span className="text-xs font-mono font-bold text-accent uppercase">
                             {CATEGORY_OPTIONS.find(c => c.key === currentOverride.category)?.label}
@@ -868,9 +902,11 @@ export default function ManualReviewQueue() {
                                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
                                   <span className="truncate">{cat.label}</span>
                                 </div>
-                                <kbd className="px-1 py-0.2 bg-ink/60 rounded text-[9px] font-mono text-paper/50 border border-ink-line/20 ml-1">
-                                  {cat.shortcut}
-                                </kbd>
+                                {shortcutsEnabled && (
+                                  <kbd className="px-1 py-0.2 bg-ink/60 rounded text-[9px] font-mono text-paper/50 border border-ink-line/20 ml-1">
+                                    {cat.shortcut}
+                                  </kbd>
+                                )}
                               </button>
                             );
                           })}
@@ -882,7 +918,7 @@ export default function ManualReviewQueue() {
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-paper/70 flex items-center gap-1.5">
                             <span>2. Assign Final Severity</span>
-                            <span className="text-paper/40 font-normal">(Keys Q / W / E)</span>
+                            {shortcutsEnabled && <span className="text-paper/40 font-normal">(Keys Q / W / E)</span>}
                           </label>
                           <span className="text-xs font-mono font-bold text-accent uppercase">
                             {SEVERITY_OPTIONS.find(s => s.key === currentOverride.severity)?.label}
@@ -910,9 +946,11 @@ export default function ManualReviewQueue() {
                                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: sev.color }} />
                                   <span className="truncate">{sev.label.replace(' Severity', '')}</span>
                                 </div>
-                                <kbd className="px-1 py-0.2 bg-ink/60 rounded text-[9px] font-mono text-paper/50 border border-ink-line/20 ml-1">
-                                  {sev.shortcut}
-                                </kbd>
+                                {shortcutsEnabled && (
+                                  <kbd className="px-1 py-0.2 bg-ink/60 rounded text-[9px] font-mono text-paper/50 border border-ink-line/20 ml-1">
+                                    {sev.shortcut}
+                                  </kbd>
+                                )}
                               </button>
                             );
                           })}
@@ -931,13 +969,15 @@ export default function ManualReviewQueue() {
                       onClick={() => triggerTriageAction('discard')}
                       disabled={processingId === currentItem.report_id}
                       className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-button bg-severity-high/15 hover:bg-severity-high/25 text-red-300 border border-severity-high/40 text-xs font-mono font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Discard report as spam (Shortcut: D or Backspace)"
+                      title="Discard report as spam"
                     >
                       <Ban className="w-4 h-4 text-severity-high" />
                       <span>{isResolutionSignal ? 'REJECT SIGNAL' : 'DISCARD AS SPAM'}</span>
-                      <kbd className="px-1.5 py-0.5 bg-ink/60 rounded text-[10px] text-red-300/80 border border-severity-high/30">
-                        [D]
-                      </kbd>
+                      {shortcutsEnabled && (
+                        <kbd className="px-1.5 py-0.5 bg-ink/60 rounded text-[10px] text-red-300/80 border border-severity-high/30">
+                          [D]
+                        </kbd>
+                      )}
                     </button>
 
                     {/* Approve Override Button */}
@@ -946,7 +986,7 @@ export default function ManualReviewQueue() {
                       onClick={() => triggerTriageAction('approve')}
                       disabled={processingId === currentItem.report_id}
                       className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-button bg-severity-low hover:bg-emerald-600 text-ink font-mono text-xs font-extrabold transition-all shadow-lg active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Approve override and create ticket (Shortcut: A or Enter)"
+                      title="Approve override and create ticket"
                     >
                       {processingId === currentItem.report_id ? (
                         <Loader2 className="w-4 h-4 animate-spin text-ink" />
@@ -954,9 +994,11 @@ export default function ManualReviewQueue() {
                         <Check className="w-4 h-4 stroke-[3] text-ink" />
                       )}
                       <span>{isResolutionSignal ? 'CONFIRM RESOLUTION' : 'APPROVE OVERRIDE'}</span>
-                      <kbd className="px-1.5 py-0.5 bg-ink/20 rounded text-[10px] text-ink border border-ink/30 font-bold">
-                        [A]
-                      </kbd>
+                      {shortcutsEnabled && (
+                        <kbd className="px-1.5 py-0.5 bg-ink/20 rounded text-[10px] text-ink border border-ink/30 font-bold">
+                          [A]
+                        </kbd>
+                      )}
                     </button>
 
                   </div>
@@ -1051,13 +1093,22 @@ export default function ManualReviewQueue() {
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                className="text-paper/50 hover:text-paper"
+                className="text-paper/50 hover:text-paper cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs font-sans">
+              <div className="flex items-center justify-between bg-accent/10 border border-accent/25 p-3 rounded">
+                <span className="font-mono text-xs text-paper/80">Master Shortcuts Engine:</span>
+                <span className={`px-2 py-0.5 rounded font-mono font-bold text-xs ${
+                  shortcutsEnabled ? 'bg-accent text-ink' : 'bg-ink-muted text-paper/60'
+                }`}>
+                  {shortcutsEnabled ? 'ENABLED' : 'DISABLED'}
+                </span>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-ink/60 p-2.5 rounded border border-ink-line/10 space-y-1">
                   <span className="font-mono text-[10px] text-accent font-bold block uppercase">CATEGORIES</span>
@@ -1086,7 +1137,7 @@ export default function ManualReviewQueue() {
                   <p><kbd className="bg-severity-low/20 text-severity-low px-1.5 py-0.5 rounded border border-severity-low/30">A</kbd> or <kbd className="bg-ink px-1.5 py-0.5 rounded border border-ink-line/20">Enter</kbd> Approve</p>
                   <p><kbd className="bg-severity-high/20 text-red-400 px-1.5 py-0.5 rounded border border-severity-high/30">D</kbd> or <kbd className="bg-ink px-1.5 py-0.5 rounded border border-ink-line/20">Backsp</kbd> Discard</p>
                   <p><kbd className="bg-ink px-1.5 py-0.5 rounded border border-ink-line/20 text-accent">J</kbd> / <kbd className="bg-ink px-1.5 py-0.5 rounded border border-ink-line/20 text-accent">K</kbd> Prev / Next Case</p>
-                  <p><kbd className="bg-accent/20 text-accent px-1.5 py-0.5 rounded border border-accent/30">Z</kbd> Undo Action</p>
+                  <p><kbd className="bg-accent/20 text-accent px-1.5 py-0.5 rounded border border-accent/30">Z</kbd> Undo Action (4s window)</p>
                 </div>
               </div>
             </div>
@@ -1095,7 +1146,7 @@ export default function ManualReviewQueue() {
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                className="px-4 py-2 bg-primary hover:bg-primary/90 text-paper font-mono text-xs font-bold rounded-button"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-paper font-mono text-xs font-bold rounded-button cursor-pointer"
               >
                 GOT IT
               </button>
