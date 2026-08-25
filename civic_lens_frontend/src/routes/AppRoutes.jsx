@@ -126,6 +126,7 @@ export default function AppRoutes() {
         <Route path="/admin/audit-log" element={<AdminAuditLog />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLog />} />
         <Route path="/admin/requests" element={<AdminRequests />} />
+        <Route path="/admin/pending-requests" element={<AdminRequests />} />
         <Route path="/admin/profile" element={<AdminProfile />} />
       </Route>
 
