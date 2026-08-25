@@ -32,7 +32,7 @@ import {
   Activity, Layers, FileCheck, ExternalLink, Sparkles,
   Award, Clock, Check, Copy, Radio, Zap, ShieldAlert,
   Fingerprint, Compass, Server, CheckSquare, ListChecks,
-  BarChart2, FileText
+  BarChart2, FileText, ArrowLeft, LayoutDashboard
 } from 'lucide-react';
 import api from '../../../services/api';
 
@@ -203,6 +203,27 @@ export default function AdminProfile() {
       
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 survey-grid opacity-10 pointer-events-none" />
+
+      {/* ─────────────────────────────────────────────────────────────
+          0. TOP BREADCRUMB / BACK TO DASHBOARD STRIP
+      ───────────────────────────────────────────────────────────── */}
+      <div className="relative z-10 flex items-center justify-between border-b border-ink-line/10 pb-4">
+        <Link
+          to="/admin/overview"
+          className="inline-flex items-center gap-2 text-xs font-mono font-bold text-paper/70 hover:text-accent transition-all group"
+        >
+          <div className="w-6 h-6 rounded bg-ink-muted/50 border border-ink-line/20 flex items-center justify-center group-hover:border-accent/40 group-hover:bg-accent/10 transition-all">
+            <ArrowLeft className="w-3.5 h-3.5 text-paper/60 group-hover:text-accent group-hover:-translate-x-0.5 transition-all" />
+          </div>
+          <span>Back to Dashboard Overview</span>
+        </Link>
+
+        <div className="font-mono text-[10px] text-paper/40 flex items-center gap-2">
+          <span>ZONE ADMIN</span>
+          <span>/</span>
+          <span className="text-accent font-bold uppercase">PROFILE DOSSIER</span>
+        </div>
+      </div>
 
       {/* ─────────────────────────────────────────────────────────────
           1. HERO COMMAND OFFICER IDENTIFICATION DECK
