@@ -81,7 +81,7 @@ function AdminLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="flex min-h-screen bg-ink text-paper overflow-hidden font-sans">
       <AdminSidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
