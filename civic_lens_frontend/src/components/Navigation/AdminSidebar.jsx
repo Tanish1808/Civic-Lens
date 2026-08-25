@@ -59,7 +59,7 @@ export default function AdminSidebar() {
 
   return (
     <>
-      <aside className="w-64 bg-ink border-r border-ink-line/15 p-5 flex flex-col justify-between h-screen flex-shrink-0 text-paper select-none font-sans relative z-30">
+      <aside className="w-64 bg-ink border-r border-ink-line/15 p-5 flex flex-col justify-between h-screen flex-shrink-0 text-paper select-none font-sans sticky top-0 z-30 overflow-y-auto">
         
         <div className="space-y-6">
           
