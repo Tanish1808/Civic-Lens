@@ -17,10 +17,13 @@
  *    - Tab 1: Officer Information & Ward Coverage (Profile parameters, AMC HQ location, account info).
  *    - Tab 2: Security & Password Management (Working password change form & security guidelines).
  *    - Tab 3: Admin Permissions & Capabilities (Clear, honest list of admin privileges).
+ * 4. High-Security Sign Out Confirmation Modal:
+ *    - Protected session termination with custom confirmation dialog.
  * ==============================================================================
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, Mail, Phone, Shield, ShieldCheck, KeyRound, 
@@ -38,6 +41,9 @@ export default function AdminProfile() {
 
   // Active Tab: 'dossier' | 'security' | 'permissions'
   const [activeTab, setActiveTab] = useState('dossier');
+
+  // Sign out confirmation modal
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   // Profile and Live Metrics Data
   const [profile, setProfile] = useState(null);
@@ -180,11 +186,12 @@ export default function AdminProfile() {
       });
   };
 
-  const handleLogout = () => {
+  const confirmSignOut = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('token');
     window.dispatchEvent(new Event('auth-change'));
+    setShowSignOutModal(false);
     navigate('/admin/login');
   };
 
@@ -263,7 +270,7 @@ export default function AdminProfile() {
 
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowSignOutModal(true)}
               className="flex-1 sm:flex-initial px-4 py-2 bg-severity-high/15 hover:bg-severity-high/25 border border-severity-high/30 text-xs font-mono font-bold text-severity-high rounded-button transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-98"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -762,6 +769,61 @@ export default function AdminProfile() {
         )}
 
       </div>
+
+      {/* ── HIGH-SECURITY CONFIRMATION MODAL (PORTAL) ── */}
+      {showSignOutModal && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-ink/80 backdrop-blur-md animate-fade-in"
+          onClick={() => setShowSignOutModal(false)}
+        >
+          <div 
+            className="relative bg-[#0E1B29] border border-ink-line/30 rounded-card shadow-2xl p-6 sm:p-7 max-w-md w-full space-y-5 text-left mx-auto transform transition-all animate-in zoom-in-95 duration-200 text-paper"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Reticle Accents */}
+            <div className="absolute top-2 left-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┌</div>
+            <div className="absolute top-2 right-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┐</div>
+            <div className="absolute bottom-2 left-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">└</div>
+            <div className="absolute bottom-2 right-2 font-mono text-[10px] text-accent font-bold select-none opacity-40">┘</div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded-card bg-severity-high/15 text-severity-high border border-severity-high/30 flex items-center justify-center flex-shrink-0 shadow-inner">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <span className="font-mono text-[10px] font-bold text-severity-high uppercase tracking-wider block">
+                  // SECURITY CONFIRMATION
+                </span>
+                <h3 className="font-display text-lg font-bold text-paper leading-tight">
+                  Exit Administrative Session?
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs text-paper/70 font-sans leading-relaxed">
+              Are you sure you want to end your current session? You will need to re-authenticate with your administrator credentials to access municipal triage dockets.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-ink-line/15 font-mono text-xs">
+              <button
+                type="button"
+                onClick={() => setShowSignOutModal(false)}
+                className="px-4 py-2 bg-ink-muted/80 hover:bg-ink-muted text-paper border border-ink-line/30 rounded-button font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSignOut}
+                className="px-5 py-2 bg-severity-high hover:bg-red-700 text-white font-bold tracking-wider rounded-button transition-colors cursor-pointer border-0 shadow-md active:scale-95"
+              >
+                Confirm Exit
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );
